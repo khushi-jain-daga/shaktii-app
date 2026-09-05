@@ -1,24 +1,20 @@
 {
-  "name": "PWN SHAKTI Mobile Incident Command",
+  "name": "PWN SHAKTI Secure Data Command",
   "short_name": "PWN SHAKTI",
-  "description": "Lightweight installable mobile command app for cyber defense alerts, alarms, investigation and safe containment.",
-  "start_url": "./?app=installed",
-  "scope": "./",
+  "description": "Installable cybersecurity and blockchain verification application for secure file protection, monitoring, audit logs and reports.",
+  "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
-  "background_color": "#05050a",
-  "theme_color": "#05050a",
-  "orientation": "portrait-primary",
+  "background_color": "#070812",
+  "theme_color": "#070812",
+  "orientation": "any",
   "icons": [
-    { "src": "assets/logo.svg?v=10", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "/assets/logo.svg?v=12", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ],
-  "categories": ["security", "productivity", "utilities"],
   "shortcuts": [
-    {
-      "name": "Start Incident Command",
-      "short_name": "Command",
-      "url": "./?flow=incident",
-      "icons": [{ "src": "assets/logo.svg?v=10", "sizes": "any", "type": "image/svg+xml" }]
-    }
-  ]
+    { "name": "Dashboard", "short_name": "Dashboard", "url": "/dashboard", "icons": [{ "src": "/assets/logo.svg?v=12", "sizes": "any", "type": "image/svg+xml" }] },
+    { "name": "Upload & Encrypt", "short_name": "Upload", "url": "/upload", "icons": [{ "src": "/assets/logo.svg?v=12", "sizes": "any", "type": "image/svg+xml" }] },
+    { "name": "Security Monitoring", "short_name": "Security", "url": "/security", "icons": [{ "src": "/assets/logo.svg?v=12", "sizes": "any", "type": "image/svg+xml" }] }
+  ],
+  "categories": ["security", "productivity", "utilities"]
 }
