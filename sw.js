@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwn-shakti-secure-command-v16';
+const CACHE_NAME = 'pwn-shakti-secure-command-v17';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -35,7 +35,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   if (event.request.mode === 'navigate') {
-    event.respondWith(fetch(event.request).catch(() => caches.match('/index.html')));
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => response.ok ? response : fetch('/'))
+        .catch(() => caches.match('/index.html'))
+    );
     return;
   }
 
