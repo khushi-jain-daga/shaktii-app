@@ -1,0 +1,15 @@
+{
+  "name": "PWN SHAKTI Mobile Command",
+  "short_name": "SHAKTII",
+  "description": "Premium mobile command app for autonomous cyber defense, alerts, investigation, blockchain intelligence and AI-guided response.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#05060a",
+  "theme_color": "#6e557d",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "assets/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "categories": ["security", "productivity", "utilities"]
+}
