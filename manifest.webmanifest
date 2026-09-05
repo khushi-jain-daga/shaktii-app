@@ -1,15 +1,24 @@
 {
-  "name": "PWN SHAKTI Mobile Command",
-  "short_name": "SHAKTII",
-  "description": "Premium mobile command app for autonomous cyber defense, alerts, investigation, blockchain intelligence and AI-guided response.",
-  "start_url": "./",
+  "name": "PWN SHAKTI Mobile Incident Command",
+  "short_name": "PWN SHAKTI",
+  "description": "Lightweight installable mobile command app for cyber defense alerts, alarms, investigation and safe containment.",
+  "start_url": "./?app=installed",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#05060a",
-  "theme_color": "#6e557d",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#05050a",
+  "theme_color": "#05050a",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "assets/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "assets/logo.svg?v=10", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ],
-  "categories": ["security", "productivity", "utilities"]
+  "categories": ["security", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Start Incident Command",
+      "short_name": "Command",
+      "url": "./?flow=incident",
+      "icons": [{ "src": "assets/logo.svg?v=10", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
 }
