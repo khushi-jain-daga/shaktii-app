@@ -3,105 +3,81 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#07060c" />
+  <meta name="theme-color" content="#05050a" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="PWN SHAKTI" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="assets/logo.svg?v=4" />
-  <link rel="apple-touch-icon" href="assets/logo.svg?v=4" />
-  <link rel="stylesheet" href="style.css?v=4" />
-  <title>PWN SHAKTI — Mobile Command Flow</title>
+  <link rel="manifest" href="manifest.webmanifest?v=8" />
+  <link rel="icon" href="assets/logo.svg?v=8" />
+  <link rel="apple-touch-icon" href="assets/logo.svg?v=8" />
+  <link rel="stylesheet" href="style.css?v=8" />
+  <title>PWN SHAKTI — Edge Command</title>
 </head>
 <body>
-  <div class="scanline"></div>
+  <div class="noise"></div>
   <div class="boot" id="boot">
-    <div class="boot-card">
-      <img src="assets/logo.svg?v=4" class="boot-logo" alt="PWN SHAKTI" />
-      <div class="terminal">
-        <div class="terminal-head"><i class="light"></i><span style="margin-left:32px">node shaktii-edge.js</span></div>
-        <div class="terminal-body" id="bootLog"></div>
-      </div>
+    <img src="assets/logo.svg?v=8" alt="PWN SHAKTI" class="boot-logo" />
+    <div class="boot-terminal">
+      <div class="terminal-head"><span></span><span></span><span></span><b>node edge-command.js</b></div>
+      <div class="boot-lines" id="bootLines"></div>
     </div>
   </div>
 
-  <main class="app">
-    <header class="top">
-      <div class="brand">
-        <img src="assets/logo.svg?v=4" alt="PWN SHAKTI" />
-        <div><h1 class="brand-title">PWN SHAKTI</h1><div class="brand-sub">edge defense command</div></div>
-      </div>
-      <div class="chip-live"><i class="pulse"></i><span id="liveMode">mock bus</span></div>
+  <main class="phone-shell">
+    <header class="app-head">
+      <img src="assets/logo.svg?v=8" alt="PWN SHAKTI" class="brand-logo" />
+      <button class="live-chip" id="backendChip"><i></i><span>mock bus</span></button>
     </header>
 
-    <section class="command fade">
-      <div class="label">operator flow / no tabs</div>
-      <div class="h" id="mainTitle">Waiting for edge telemetry</div>
-      <p class="sub" id="mainSub">This app runs like a command workflow. Each action opens the next operational step while your Docker backend is not connected yet.</p>
-      <div class="backend">
-        <div><b id="backendTitle">Backend: waiting</b><br><span id="backendSub">Ready for Docker API integration</span></div>
-        <span class="badge info" id="backendBadge">fallback</span>
+    <section class="hero-card" id="heroCard">
+      <div class="mini-label">operator command flow</div>
+      <h1 id="stageTitle">Waiting for edge telemetry</h1>
+      <p id="stageCopy">No tabs. No passive dashboard. Start the command flow and the app will move step-by-step like a live incident console.</p>
+      <div class="stage-strip" id="stageStrip"></div>
+    </section>
+
+    <section class="incident-card" id="incidentCard">
+      <div class="card-top">
+        <span class="severity safe" id="severity">secure</span>
+        <span class="tiny" id="incidentClock">standby</span>
+      </div>
+      <h2 id="incidentTitle">Edge channel idle</h2>
+      <p id="incidentBody">Router firmware and Docker backend can plug into this flow later. Until then this app uses a realistic local event bus.</p>
+      <div class="score-row">
+        <div><small>Risk</small><strong id="riskScore">18</strong></div>
+        <div><small>Confidence</small><strong id="confidence">0%</strong></div>
+        <div><small>SLA</small><strong id="sla">--</strong></div>
       </div>
     </section>
 
-    <section class="metrics">
-      <div class="metric"><p>risk score</p><strong id="riskScore">18</strong><small id="riskText">baseline clean</small></div>
-      <div class="metric"><p>latency</p><strong id="latency">0.02ms</strong><small>edge response</small></div>
-      <div class="metric"><p>packets/sec</p><strong id="packets">42.8M</strong><small>router stream</small></div>
-      <div class="metric"><p>signal</p><div class="bars"><i></i><i></i><i></i><i></i><i></i></div><small id="signalText">learning normal traffic</small></div>
-    </section>
-
-    <section class="flow" id="flowBox"></section>
-
-    <section class="panel" id="alertPanel">
-      <div class="panel-title"><h3>Current incident</h3><span id="incidentTime">not started</span></div>
-      <div class="alert-card">
-        <span class="badge safe" id="severityBadge">secure</span>
-        <h4 id="incidentTitle">No active incident</h4>
-        <p id="incidentBody">Start edge sync to simulate incoming router telemetry. When backend is ready, replace mock events with real API data.</p>
-        <div class="risk"><strong id="incidentRisk">00</strong><small id="incidentMeta">confidence 0%</small></div>
+    <section class="work-card" id="workCard">
+      <div class="work-head">
+        <span id="workKicker">next action</span>
+        <b id="workTitle">Start edge sync</b>
+      </div>
+      <div class="work-body" id="workBody">
+        Tap the primary button to simulate firmware telemetry. When backend is ready, this same state will come from your Docker API.
       </div>
     </section>
 
-    <section class="panel hidden" id="investigationPanel">
-      <div class="panel-title"><h3>Investigation graph</h3><span>relationship map</span></div>
-      <div class="graph">
-        <svg class="line-svg" viewBox="0 0 360 205"><path d="M180 102 L82 50 M180 102 L288 54 M180 102 L76 155 M180 102 L287 154" stroke="#8d93a7" stroke-width="1" stroke-dasharray="4 5"/><path d="M180 102 C148 78, 122 78, 82 50" stroke="#9c5dff" stroke-width="1.5" opacity=".7"/></svg>
-        <div class="node core"><b>web-02</b><span>asset</span></div>
-        <div class="node" style="left:23%;top:24%"><b>185.220</b><span>source ip</span></div>
-        <div class="node" style="left:80%;top:26%"><b>admin</b><span>session</span></div>
-        <div class="node" style="left:22%;top:76%"><b>api-key</b><span>created</span></div>
-        <div class="node" style="left:80%;top:76%"><b>c2 dns</b><span>lookup</span></div>
-      </div>
-      <div class="kvs"><div class="kv"><span>current stage</span><b>credential compromise</b></div><div class="kv"><span>predicted next</span><b>data exfiltration</b></div><div class="kv"><span>confidence</span><b>87%</b></div><div class="kv"><span>owner</span><b>SOC admin</b></div></div>
+    <section class="terminal-card">
+      <div class="terminal-head"><span></span><span></span><span></span><b>runtime logs</b></div>
+      <div class="runtime" id="runtime"></div>
     </section>
 
-    <section class="panel hidden" id="chainPanel">
-      <div class="panel-title"><h3>Blockchain intelligence</h3><span>optional trace</span></div>
-      <div class="kvs"><div class="kv"><span>wallet</span><b>0x7a3f...9d2e</b></div><div class="kv"><span>risk</span><b style="color:var(--amber)">medium</b></div><div class="kv"><span>transactions</span><b>342</b></div><div class="kv"><span>last movement</span><b>2h ago</b></div></div>
-      <p class="human">Human note: blockchain screen is not a decorative tab now. It opens only when an incident has a wallet/payment trail.</p>
-    </section>
-
-    <section class="panel hidden" id="aiPanel">
-      <div class="panel-title"><h3>SHAKTII recommendation</h3><span>decision layer</span></div>
-      <p class="sub">This looks like a brute-force to admin takeover chain. Next likely move is exfiltration or persistence. Use reversible containment first.</p>
-      <div class="human">Recommended: block source IP for 30 minutes, freeze suspicious session, revoke newly created API key after approval, keep rollback available.</div>
-    </section>
-
-    <section class="terminal-panel">
-      <div class="terminal-head"><i class="light"></i><span style="margin-left:32px">live event stream</span></div>
-      <div class="terminal-body" id="runtimeLog"></div>
-    </section>
-
-    <div class="actions">
-      <button class="btn primary full" id="primaryBtn">Start edge sync</button>
-      <button class="btn" id="secondaryBtn">Check backend</button>
-      <button class="btn ghost" id="resetBtn">Reset flow</button>
-    </div>
+    <footer class="action-dock">
+      <button class="btn secondary" id="secondaryBtn">Backend check</button>
+      <button class="btn primary" id="primaryBtn">Start flow</button>
+    </footer>
   </main>
 
-  <div class="toast" id="toast"></div>
-  <script src="app.js?v=4"></script>
+  <div class="toast" id="toast">Action completed</div>
+  <script src="app.js?v=8"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=8').catch(() => undefined));
+    }
+  </script>
 </body>
 </html>
