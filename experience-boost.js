@@ -1,10 +1,10 @@
 (() => {
-  const demoSteps = [
-    { title: 'Upload evidence file', path: '/analysis/new', text: 'Start with raw log/question-paper evidence and validate file type before processing.' },
-    { title: 'Run staged PKAP analysis', path: '/analysis/new', text: 'Show upload, reading, extraction, analysis, statistics and insight generation stages.' },
-    { title: 'Inspect risk dashboard', path: '/dashboard', text: 'Explain summary score, findings, IOCs and quality/risk signals from processed data.' },
-    { title: 'Open drill-down evidence', path: '/analysis/result', text: 'Click KPI cards and findings to show why a score or issue was detected.' },
-    { title: 'Generate PDF report', path: '/reports', text: 'Build the AI/local report and download a professional PDF.' }
+  const workflowSteps = [
+    { title: 'Upload evidence file', path: '/new-analysis', text: 'Start with raw log or content evidence and validate the file before processing.' },
+    { title: 'Run staged PKAP analysis', path: '/new-analysis', text: 'Show upload, reading, extraction, privacy redaction, analysis, statistics and insight generation.' },
+    { title: 'Inspect analysis dashboard', path: '/dashboard', text: 'Review summary score, findings, indicators and risk signals from processed data.' },
+    { title: 'Open drill-down evidence', path: '/dashboard', text: 'Click KPI cards and findings to inspect why each risk or issue was detected.' },
+    { title: 'Generate PDF report', path: '/reports', text: 'Build the report from analysis data and download the professional PDF.' }
   ];
 
   let panelOpen = false;
@@ -19,7 +19,7 @@
 
   function enhanceSidebarLabels() {
     document.querySelectorAll('.pkap-side button').forEach((btn) => {
-      const label = btn.textContent.trim().replace(/^.+?\s/, '') || btn.getAttribute('data-nav') || 'Open';
+      const label = btn.textContent.trim().replace(/^.+?\s/, '') || btn.getAttribute('data-route') || 'Open';
       btn.setAttribute('data-tip', label);
     });
   }
@@ -33,35 +33,35 @@
     document.body.appendChild(btn);
   }
 
-  function addDemoFlow() {
-    if (document.querySelector('.demo-flow-fab')) return;
+  function addWorkflowPanel() {
+    if (document.querySelector('.workflow-fab')) return;
     const fab = document.createElement('button');
-    fab.className = 'demo-flow-fab';
-    fab.textContent = 'Guided Jury Demo';
+    fab.className = 'workflow-fab';
+    fab.textContent = 'Analysis Workflow';
     fab.addEventListener('click', () => {
       panelOpen = !panelOpen;
-      const panel = document.querySelector('.guided-panel');
+      const panel = document.querySelector('.workflow-panel');
       if (panel) panel.classList.toggle('show', panelOpen);
     });
 
     const panel = document.createElement('section');
-    panel.className = 'guided-panel';
+    panel.className = 'workflow-panel';
     panel.innerHTML = `
-      <h3>Presenter flow</h3>
-      <p>Use this sequence to show the jury that SHAKTII is not a static dashboard.</p>
+      <h3>PKAP workflow</h3>
+      <p>Use this guided path to present the full product workflow from upload to report.</p>
       <div class="flow-steps">
-        ${demoSteps.map((s, i) => `<i data-demo-step="${i}">${i + 1}. ${s.title}</i>`).join('')}
+        ${workflowSteps.map((s, i) => `<i data-workflow-step="${i}">${i + 1}. ${s.title}</i>`).join('')}
       </div>
-      <button class="pkap-btn primary" data-demo-start>Start demo flow</button>
+      <button class="pkap-btn primary" data-workflow-start>Start workflow</button>
     `;
 
     panel.addEventListener('click', (e) => {
-      const item = e.target.closest('[data-demo-step]');
+      const item = e.target.closest('[data-workflow-step]');
       if (item) {
-        const step = demoSteps[Number(item.dataset.demoStep)];
+        const step = workflowSteps[Number(item.dataset.workflowStep)];
         go(step.path);
       }
-      if (e.target.closest('[data-demo-start]')) go('/analysis/new');
+      if (e.target.closest('[data-workflow-start]')) go('/new-analysis');
     });
 
     document.body.appendChild(panel);
@@ -69,9 +69,8 @@
   }
 
   function addCommandStrip() {
-    const outlet = document.querySelector('.pkap-main main');
     const pageHead = document.querySelector('.pkap-hero, .result-top, .pkap-pagehead, .empty-state');
-    if (!outlet || !pageHead || document.querySelector('.command-strip')) return;
+    if (!pageHead || document.querySelector('.command-strip')) return;
     if (!location.pathname.includes('/dashboard') && location.pathname !== '/') return;
 
     const strip = document.createElement('section');
@@ -80,12 +79,12 @@
       <article class="command-card">
         <p>Live product flow</p>
         <h3>PKAP Analyzer command path</h3>
-        <span>Upload → staged processing → analysis dashboard → evidence drill-down → report/PDF. Use quick actions below during presentation.</span>
+        <span>Upload → staged processing → analysis dashboard → evidence drill-down → report/PDF. Use the workflow control during presentation.</span>
       </article>
       <article class="command-card">
         <p>System readiness</p>
         <h3>Backend-ready</h3>
-        <div class="flow-steps"><i>Same-origin PKAP API</i><i>Docker URL supported</i><i>Fallback shown clearly</i></div>
+        <div class="flow-steps"><i>Same-origin PKAP API</i><i>Docker backend URL supported</i><i>Local analyzer fallback available</i></div>
       </article>
       <article class="command-card command-matrix" aria-label="PKAP visual command matrix"></article>
     `;
@@ -93,9 +92,8 @@
   }
 
   function keepHomeVisible() {
-    const loggedIn = !!localStorage.getItem('SHAKTII_AUTH') || !!localStorage.getItem('SHAKTII_PKAP_STATE_V1');
     const onAuth = location.pathname === '/login' || location.pathname === '/signup';
-    document.querySelectorAll('.side-home-fab, .demo-flow-fab').forEach((el) => {
+    document.querySelectorAll('.side-home-fab, .workflow-fab').forEach((el) => {
       el.style.display = onAuth ? 'none' : '';
     });
   }
@@ -103,7 +101,7 @@
   function runEnhancements() {
     enhanceSidebarLabels();
     addSideHome();
-    addDemoFlow();
+    addWorkflowPanel();
     addCommandStrip();
     keepHomeVisible();
   }
