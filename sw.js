@@ -1,8 +1,22 @@
-const CACHE_NAME = 'pwn-shakti-full-app-v12';
-const APP_SHELL = ['/', '/dashboard', '/index.html', '/manifest.webmanifest', '/style.css', '/data.js', '/api.js', '/app.js', '/assets/logo.svg'];
+const CACHE_NAME = 'pwn-shakti-secure-command-v14';
+const APP_SHELL = [
+  '/',
+  '/index.html',
+  '/manifest.webmanifest',
+  '/style.css',
+  '/mobile-fix.css',
+  '/data.js',
+  '/api.js',
+  '/app.js',
+  '/assets/logo.svg'
+];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -16,7 +30,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  if (url.origin !== location.origin) return;
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(fetch(event.request).catch(() => caches.match('/index.html')));
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/')) return;
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
