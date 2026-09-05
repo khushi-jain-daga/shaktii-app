@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwn-shakti-pkap-workflow-v24';
+const CACHE_NAME = 'pwn-shakti-pkap-workflow-v25';
 const APP_SHELL = [
   '/',
   '/index.html',
