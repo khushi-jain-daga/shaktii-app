@@ -1,42 +1,102 @@
-# PWN SHAKTI Mobile Command — Premium PWA
+# PWN SHAKTI Secure Data Command
 
-This is the improved SHAKTII mobile app prototype. It is a standalone PWA, not Expo.
+This repository contains the standalone installable SHAKTII application.
 
-## Run locally on Windows
+It is intentionally separate from the marketing website.
 
-Double click `start-local-server.bat` or run:
+## What this app is
+
+A lightweight PWA for demonstrating the full cybersecurity + blockchain software flow:
+
+- Login / workspace entry
+- Dashboard overview
+- Secure files vault
+- File detail pages
+- Upload and encryption workflow
+- Access control
+- Blockchain verification ledger
+- Security monitoring
+- Analytics
+- Audit logs
+- Reports
+- Notifications and alarm demo
+- Settings and profile
+
+## Why PWA
+
+For the hackathon demo, this is faster and more reliable than Expo/native builds:
+
+- Installable from Vercel on phone
+- Very lightweight
+- No Android SDK or Expo Go version issues
+- Runs on desktop and mobile
+- Supports offline app shell through service worker
+- Can connect to Docker backend later through API hooks
+
+## Backend integration
+
+The app has a dedicated `api.js` service layer.
+
+By default, it uses demo data from `data.js`.
+
+To connect a Docker backend, open the app with:
+
+```text
+https://your-app-url.vercel.app/dashboard?api=http://localhost:8000
+```
+
+or set the backend URL in Settings.
+
+Expected backend endpoints can be mapped to:
+
+```text
+GET  /api/dashboard
+GET  /api/files
+GET  /api/files/:id
+POST /api/files/upload
+GET  /api/blockchain/records
+GET  /api/blockchain/records/:id
+POST /api/blockchain/verify
+GET  /api/security/alerts
+GET  /api/security/alerts/:id
+POST /api/security/contain
+GET  /api/analytics
+GET  /api/activity
+GET  /api/reports
+POST /api/reports/generate
+```
+
+## Local run
+
+No build step is required.
 
 ```powershell
-cd C:\Users\HP\Downloads\shaktii-mobile-pwa-pro-v3
 python -m http.server 5173
 ```
 
 Open:
 
 ```text
-http://localhost:5173
+http://localhost:5173/dashboard
 ```
 
-## Install as an app
+## Vercel
 
-For real phone installation, deploy this folder to Vercel/Netlify/GitHub Pages, open the HTTPS URL on phone Chrome, then tap **Install App** or **Add to Home Screen**.
+Import the repository into Vercel as a static project. `vercel.json` contains SPA rewrites so routes like `/files/FL-001` refresh correctly.
 
-Local file opening (`file://index.html`) will preview the design, but proper app installation needs a hosted URL.
+## Jury demo flow
 
-## Screens included
-
-- Home command overview
-- Alerts inbox
-- Investigation graph
-- Blockchain intelligence
-- SHAKTII AI assistant
-
-## Visual upgrades
-
-- Website-like dark grid background
-- JetBrains Mono + premium heading styling
-- Purple glow accents
-- Critical red pulse effects
-- App-style top safe area and bottom navigation
-- Install app CTA
-- Service worker + manifest
+```text
+Login
+→ Dashboard
+→ Upload & Encrypt
+→ View Protected File
+→ Verify Blockchain Record
+→ Security Monitoring
+→ Trigger Alarm
+→ Alert Detail
+→ Containment Action
+→ Analytics
+→ Audit Logs
+→ Reports
+```
