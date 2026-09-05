@@ -1,417 +1,262 @@
-const app = document.getElementById('app');
-const toastEl = document.getElementById('toast');
-const alarmLayer = document.getElementById('alarmLayer');
+const $ = (q, r = document) => r.querySelector(q);
+const $$ = (q, r = document) => Array.from(r.querySelectorAll(q));
+const app = $('#app');
+const toastEl = $('#toast');
+const STORE = 'SHAKTII_PKAP_STATE_V1';
 
-const state = {
-  user: JSON.parse(localStorage.getItem('SHAKTII_USER') || 'null'),
-  installPrompt: null,
-  installed: isStandalone(),
-  sidebarOpen: false,
-  source: 'demo',
-  upload: { step: 1, file: null, options: { encrypt: true, blockchain: true, access: true }, result: null },
-  filters: { files: '', activity: '', analytics: '7d' }
+const defaultSettings = {
+  theme: 'dark', strictDuplicates: true, nearDuplicate: true, severityAnalysis: true,
+  iocExtraction: true, answerPattern: false, languageValidation: true,
+  includeCharts: true, includeFindings: true, includeRecommendations: true, includeAISummary: true
 };
 
-const routes = [
-  { path: '/dashboard', label: 'Dashboard', icon: '⌂' },
-  { path: '/files', label: 'Secure Files', icon: '▣' },
-  { path: '/upload', label: 'Upload & Encrypt', icon: '⇧' },
-  { path: '/access', label: 'Access Control', icon: '◈' },
-  { path: '/blockchain', label: 'Blockchain Ledger', icon: '◇' },
-  { path: '/security', label: 'Security Monitoring', icon: '!' },
-  { path: '/analytics', label: 'Analytics', icon: '↗' },
-  { path: '/activity', label: 'Audit Logs', icon: '☷' },
-  { path: '/reports', label: 'Reports', icon: '◧' },
-  { path: '/notifications', label: 'Notifications', icon: '◎' },
-  { path: '/settings', label: 'Settings', icon: '⚙' },
-  { path: '/profile', label: 'Profile', icon: '◉' }
-];
+const state = loadState();
+let installPrompt = null;
+let activeFile = null;
+let processingTimer = null;
 
-const sample = () => window.SHAKTII_DATA;
-const currentPath = () => window.location.pathname === '/' ? '/login' : window.location.pathname;
-const byId = (id) => document.getElementById(id);
-const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[m]));
-
-function isStandalone() {
-  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('SHAKTII_INSTALLED') === 'true';
+function loadState() {
+  const saved = JSON.parse(localStorage.getItem(STORE) || '{}');
+  return {
+    user: saved.user || null,
+    analyses: saved.analyses || [],
+    activeId: saved.activeId || null,
+    reports: saved.reports || [],
+    settings: { ...defaultSettings, ...(saved.settings || {}) },
+    drawer: null,
+    processing: null,
+    authError: '',
+    route: normalizeRoute(location.pathname)
+  };
 }
+function saveState() { localStorage.setItem(STORE, JSON.stringify({ user: state.user, analyses: state.analyses, activeId: state.activeId, reports: state.reports, settings: state.settings })); }
+function normalizeRoute(path) { return path === '/' ? '/login' : path; }
+function navigate(path) { history.pushState({}, '', path); state.route = normalizeRoute(path); render(); }
+function activeAnalysis() { return state.analyses.find(a => a.id === state.activeId) || state.analyses[0] || null; }
+function currentAnalysisIdFromRoute() { const m = state.route.match(/^\/analysis\/([^/]+)/); return m ? decodeURIComponent(m[1]) : null; }
+function escapeHtml(v) { return String(v ?? '').replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m])); }
+function pct(n, total) { return total ? Math.round((Number(n || 0) / total) * 100) : 0; }
+function toast(msg, type = 'info') { toastEl.textContent = msg; toastEl.className = `toast show ${type}`; setTimeout(() => toastEl.className = 'toast', 2600); }
 
-function toast(message, type = 'default') {
-  toastEl.textContent = message;
-  toastEl.className = `toast show ${type}`;
-  setTimeout(() => toastEl.className = 'toast', 2400);
-}
+window.addEventListener('popstate', () => { state.route = normalizeRoute(location.pathname); render(); });
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; render(); });
+window.addEventListener('appinstalled', () => { localStorage.setItem('SHAKTII_INSTALLED', 'true'); installPrompt = null; toast('App installed successfully', 'success'); render(); });
 
-function navigate(path) {
-  window.history.pushState({}, '', path);
-  state.sidebarOpen = false;
-  render();
-}
-
-window.addEventListener('popstate', render);
-window.addEventListener('beforeinstallprompt', (event) => {
-  event.preventDefault();
-  state.installPrompt = event;
-  state.installed = isStandalone();
-  updateInstallButtons();
-});
-window.addEventListener('appinstalled', () => {
-  state.installed = true;
-  state.installPrompt = null;
-  localStorage.setItem('SHAKTII_INSTALLED', 'true');
-  updateInstallButtons();
-  toast('App installed successfully', 'success');
-});
-
-document.addEventListener('click', (event) => {
-  const nav = event.target.closest('[data-nav]');
-  if (nav) return navigate(nav.dataset.nav);
-
-  const action = event.target.closest('[data-action]');
+document.addEventListener('click', async e => {
+  const nav = e.target.closest('[data-route]');
+  if (nav) { e.preventDefault(); return navigate(nav.dataset.route); }
+  const action = e.target.closest('[data-pkap-action]');
   if (!action) return;
-  const value = action.dataset.action;
-  if (value === 'login') return login();
-  if (value === 'logout') return logout();
-  if (value === 'toggle-sidebar') { state.sidebarOpen = !state.sidebarOpen; return render(); }
-  if (value === 'install') return installApp();
-  if (value === 'next-upload') return nextUploadStep();
-  if (value === 'prev-upload') return prevUploadStep();
-  if (value === 'complete-upload') return completeUpload();
-  if (value === 'test-alarm') return triggerAlarm();
-  if (value === 'ack-alarm') return acknowledgeAlarm();
-  if (value === 'contain') return containThreat();
-  if (value === 'generate-report') return generateReport();
-  if (value === 'verify-file') return verifyFile(action.dataset.file || 'FL-003');
-  if (value === 'save-settings') return toast('Settings saved for this device', 'success');
+  const a = action.dataset.pkapAction;
+  if (a === 'login') return login();
+  if (a === 'logout') return logout();
+  if (a === 'install') return installApp();
+  if (a === 'clear-file') { activeFile = null; return render(); }
+  if (a === 'start-analysis') return startAnalysis();
+  if (a === 'new-analysis') { activeFile = null; state.processing = null; return navigate('/new-analysis'); }
+  if (a === 'drawer') { state.drawer = action.dataset.drawer; return render(); }
+  if (a === 'close-drawer') { state.drawer = null; return render(); }
+  if (a === 'generate-report') return generateReport();
+  if (a === 'download-pdf') return downloadActivePdf();
+  if (a === 'save-settings') return saveSettings();
 });
 
-document.addEventListener('input', (event) => {
-  const input = event.target;
-  if (input.matches('[data-filter="files"]')) { state.filters.files = input.value; return renderPage(); }
-  if (input.matches('[data-filter="activity"]')) { state.filters.activity = input.value; return renderPage(); }
-  if (input.matches('#uploadFile')) { state.upload.file = input.files?.[0] || null; return renderPage(); }
+document.addEventListener('change', e => {
+  if (e.target.id === 'fileInput') { activeFile = e.target.files?.[0] || null; render(); }
+  if (e.target.matches('[data-setting]')) { const k = e.target.dataset.setting; state.settings[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; saveState(); }
 });
 
-document.querySelector('[data-close-alarm]')?.addEventListener('click', () => alarmLayer.classList.remove('show'));
-document.querySelector('[data-ack-alarm]')?.addEventListener('click', acknowledgeAlarm);
+document.addEventListener('dragover', e => { if (e.target.closest('.dropzone')) { e.preventDefault(); e.target.closest('.dropzone').classList.add('dragging'); } });
+document.addEventListener('dragleave', e => { if (e.target.closest('.dropzone')) e.target.closest('.dropzone').classList.remove('dragging'); });
+document.addEventListener('drop', e => {
+  const dz = e.target.closest('.dropzone');
+  if (!dz) return;
+  e.preventDefault(); dz.classList.remove('dragging'); activeFile = e.dataTransfer.files?.[0] || null; render();
+});
 
-function login() {
-  const name = byId('loginName')?.value?.trim() || 'Khushi Jain';
-  state.user = { name, role: 'Security Admin', email: 'admin@pwnshakti.ai' };
-  localStorage.setItem('SHAKTII_USER', JSON.stringify(state.user));
-  navigate('/dashboard');
-}
-
-function logout() {
-  localStorage.removeItem('SHAKTII_USER');
-  state.user = null;
-  navigate('/login');
-}
+document.addEventListener('mousemove', e => {
+  const t = e.target.closest('[data-tip]');
+  const tip = $('#chartTooltip');
+  if (!tip) return;
+  if (!t) { tip.classList.remove('show'); return; }
+  tip.textContent = t.dataset.tip;
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - 230) + 'px';
+  tip.style.top = Math.max(e.clientY - 34, 12) + 'px';
+  tip.classList.add('show');
+});
 
 async function installApp() {
-  if (state.installed || isStandalone()) {
-    state.installed = true;
-    localStorage.setItem('SHAKTII_INSTALLED', 'true');
-    updateInstallButtons();
-    return toast('App is already installed', 'success');
-  }
-  if (!state.installPrompt) return toast('Install is available from browser menu: Add to Home Screen', 'info');
-  state.installPrompt.prompt();
-  const result = await state.installPrompt.userChoice;
-  if (result.outcome === 'accepted') {
-    state.installed = true;
-    localStorage.setItem('SHAKTII_INSTALLED', 'true');
-    toast('App installed successfully', 'success');
-  }
-  state.installPrompt = null;
-  updateInstallButtons();
+  if (isStandalone()) return toast('App already installed', 'success');
+  if (!installPrompt) return toast('Use Chrome menu → Install app / Add to Home screen', 'info');
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  render();
+}
+function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
+function login() {
+  const email = $('#email')?.value?.trim(); const pass = $('#password')?.value?.trim();
+  if (!email || !pass) { state.authError = 'Enter email and password to continue.'; return render(); }
+  state.user = { name: email.split('@')[0] || 'Operator', email, role: 'PKAP Analyst' };
+  state.authError = ''; saveState(); navigate(state.analyses.length ? '/dashboard' : '/new-analysis');
+}
+function logout() { state.user = null; state.authError = ''; saveState(); navigate('/login'); }
+
+async function readFile(file) { return await file.text(); }
+function validateFile(file) {
+  if (!file) return 'Please select a log/content file first.';
+  const max = 8 * 1024 * 1024;
+  const ok = ['.log','.txt','.json','.csv','.md','.yaml','.yml'].some(ext => file.name.toLowerCase().endsWith(ext));
+  if (!ok) return 'Unsupported file type. Use .log, .txt, .json, .csv, .md, .yaml or .yml for this analyzer build.';
+  if (file.size > max) return 'File is too large for browser demo mode. Keep it under 8 MB.';
+  return '';
+}
+function redact(text) {
+  let masked = 0;
+  const rules = [
+    [/([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, '[REDACTED_EMAIL]'],
+    [/(password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key)\s*[:=]\s*[^\s,;]+/gi, '$1=[REDACTED_SECRET]'],
+    [/AKIA[0-9A-Z]{16}/g, '[REDACTED_AWS_KEY]'],
+    [/eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g, '[REDACTED_JWT]']
+  ];
+  let out = text;
+  rules.forEach(([r, v]) => { out = out.replace(r, m => { masked++; return typeof v === 'function' ? v(m) : v; }); });
+  return { text: out, masked };
 }
 
-function updateInstallButtons() {
-  document.querySelectorAll('[data-action="install"]').forEach((button) => {
-    const installed = state.installed || isStandalone();
-    button.textContent = installed ? 'App Installed' : 'Install App';
-    button.disabled = installed;
-    button.classList.toggle('is-installed', installed);
+async function startAnalysis() {
+  const error = validateFile(activeFile);
+  if (error) return toast(error, 'danger');
+  const stages = ['Uploading file','Reading file','Extracting content','Redacting sensitive values','Running PKAP analysis','Calculating statistics','Generating insights','Preparing dashboard'];
+  state.processing = { stage: stages[0], percent: 4, error: '' }; render();
+  try {
+    let raw = '';
+    for (let i = 0; i < stages.length; i++) {
+      state.processing = { stage: stages[i], percent: Math.min(94, 8 + i * 12), error: '' }; renderProcessingOnly();
+      await new Promise(r => setTimeout(r, 420));
+      if (i === 1) raw = await readFile(activeFile);
+    }
+    if (!raw.trim()) throw new Error('Uploaded file has no readable text content.');
+    const redacted = redact(raw);
+    let result, source = 'backend';
+    try {
+      result = await window.SHAKTII_API.analyze({ fileName: activeFile.name, redactedData: redacted.text, settings: state.settings });
+      result = normalizeAnalysis(result.analysis, activeFile.name, raw, redacted.masked, result.providerUsed || 'PKAP API');
+    } catch (apiError) {
+      source = 'local deterministic fallback';
+      result = localAnalyze(activeFile.name, raw, redacted.masked, apiError.message);
+    }
+    state.processing = { stage: 'Completed', percent: 100, error: '' }; renderProcessingOnly(); await new Promise(r => setTimeout(r, 350));
+    const existing = state.analyses.filter(a => a.id !== result.id);
+    state.analyses = [result, ...existing].slice(0, 12);
+    state.activeId = result.id;
+    saveState(); activeFile = null; state.processing = null;
+    toast(`Analysis complete via ${source}`, source === 'backend' ? 'success' : 'info');
+    navigate(`/analysis/${result.id}`);
+  } catch (err) {
+    state.processing = { stage: 'Failed', percent: 0, error: err.message || 'Analysis failed.' }; render();
+  }
+}
+
+function normalizeAnalysis(a = {}, fileName, raw, masked, provider) {
+  const id = `AN-${Date.now()}`;
+  const findings = Array.isArray(a.findings) ? a.findings : [];
+  const iocs = Array.isArray(a.iocs) ? a.iocs : [];
+  const sev = a.severityBreakdown || countSeverity(findings);
+  const risk = Number(a?.metadata?.overallRiskScore ?? scoreFromSeverity(sev, iocs));
+  return { id, fileName, createdAt: new Date().toISOString(), provider, executiveSummary: a.executiveSummary || 'PKAP analysis completed.', metadata: { ...(a.metadata || {}), overallRiskScore: risk, fileName, lines: raw.split(/\r?\n/).length, privacyMasked: masked }, severityBreakdown: sev, findings, iocs, remediationChecklist: a.remediationChecklist || recommendations(sev, findings, iocs), rawStats: basicStats(raw), report: '' };
+}
+function localAnalyze(fileName, raw, masked, apiError) {
+  const lines = raw.split(/\r?\n/).filter(Boolean);
+  const findings = [];
+  lines.forEach((line, idx) => {
+    const lower = line.toLowerCase(); let severity = '', type = '';
+    if (/ransom|malware|exfil|privilege|root|critical|breach|c2|command.+control/.test(lower)) { severity = 'Critical'; type = 'Critical threat signal'; }
+    else if (/failed|denied|unauthorized|forbidden|bruteforce|brute force|suspicious|blocked/.test(lower)) { severity = 'High'; type = 'Suspicious access/event'; }
+    else if (/warning|warn|timeout|anomaly|unusual|policy|scan/.test(lower)) { severity = 'Medium'; type = 'Warning/anomaly'; }
+    else if (/info|ok|success|normal|pass/.test(lower)) { severity = 'Info'; type = 'Informational event'; }
+    if (severity) findings.push({ severity, eventType: type, sourceIP: (line.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/) || ['-'])[0], timestamp: (line.match(/\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}/) || [`line ${idx+1}`])[0], description: line.slice(0, 180), mitreTag: severity === 'Critical' ? 'Tactic: Impact / Exfiltration' : severity === 'High' ? 'Tactic: Initial Access' : 'Review', rawLogSnippet: line.slice(0, 240), matchedPattern: type });
   });
+  const iocs = extractIocs(raw);
+  const sev = countSeverity(findings);
+  const risk = scoreFromSeverity(sev, iocs);
+  return { id: `AN-${Date.now()}`, fileName, createdAt: new Date().toISOString(), provider: 'Client deterministic analyzer', executiveSummary: `PKAP processed ${lines.length} log/content lines and detected ${findings.length} notable events. ${apiError ? 'AI backend was unavailable, so deterministic analysis was used.' : ''}`.trim(), metadata: { logTypeDetected: detectType(raw, fileName), timeRangeCovered: detectRange(raw), overallRiskScore: risk, fileName, lines: lines.length, privacyMasked: masked, apiError }, severityBreakdown: sev, findings, iocs, remediationChecklist: recommendations(sev, findings, iocs), rawStats: basicStats(raw), report: '' };
 }
+function extractIocs(raw) {
+  const ips = [...new Set(raw.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g) || [])].slice(0, 40).map(v => ({ value: v, type: 'IP', reputation: /185\.220|45\.|91\./.test(v) ? 'Suspicious' : 'Unknown' }));
+  const domains = [...new Set(raw.match(/\b[a-z0-9.-]+\.(?:com|net|org|io|in|ru|cn|xyz)\b/gi) || [])].slice(0, 30).map(v => ({ value: v, type: 'Domain', reputation: /tor|mal|evil|c2|phish/i.test(v) ? 'Suspicious' : 'Unknown' }));
+  const hashes = [...new Set(raw.match(/\b[a-f0-9]{32,64}\b/gi) || [])].slice(0, 20).map(v => ({ value: v, type: 'Hash', reputation: 'Unknown' }));
+  return [...ips, ...domains, ...hashes];
+}
+function countSeverity(findings) { return findings.reduce((a, f) => { const k = String(f.severity || 'Info').toLowerCase(); a[k] = (a[k] || 0) + 1; return a; }, { critical:0, high:0, medium:0, low:0, info:0 }); }
+function scoreFromSeverity(s, iocs) { return Math.min(100, (s.critical||0)*22 + (s.high||0)*12 + (s.medium||0)*6 + Math.min(20, iocs.length*2)); }
+function recommendations(s, findings, iocs) { const r = []; if (s.critical) r.push('Immediately review critical findings and preserve evidence.'); if (s.high) r.push('Acknowledge high severity access or policy events and validate affected assets.'); if (iocs.length) r.push('Enrich extracted IOCs with threat intelligence and block confirmed malicious indicators.'); r.push('Generate a PDF report and attach it to the incident/history record.'); return r; }
+function detectType(raw, name) { if (/nginx|apache|http/i.test(raw)) return 'Web/server logs'; if (/ssh|sudo|auth/i.test(raw)) return 'Authentication/system logs'; if (/wallet|transaction|block|hash/i.test(raw)) return 'Blockchain/security records'; return name.split('.').pop()?.toUpperCase() || 'Text'; }
+function detectRange(raw) { const dates = raw.match(/\d{4}-\d{2}-\d{2}/g) || []; return dates.length ? `${dates[0]} to ${dates[dates.length-1]}` : 'Not detected'; }
+function basicStats(raw) { return { chars: raw.length, words: raw.trim().split(/\s+/).filter(Boolean).length, lines: raw.split(/\r?\n/).length }; }
 
-function ensureAuth() {
-  const path = currentPath();
-  if (!state.user && !['/login', '/signup'].includes(path)) {
-    window.history.replaceState({}, '', '/login');
+async function generateReport() {
+  const a = activeAnalysis(); if (!a) return toast('Run an analysis first.', 'danger');
+  toast('Generating AI report...', 'info');
+  try {
+    const res = await window.SHAKTII_API.generateReport({ analysisData: a });
+    a.report = res.report; a.reportProvider = res.providerUsed; state.reports = [{ id: `RP-${Date.now()}`, analysisId: a.id, fileName: a.fileName, createdAt: new Date().toISOString(), provider: res.providerUsed }, ...state.reports.filter(r => r.analysisId !== a.id)];
+  } catch {
+    a.report = buildLocalReport(a); a.reportProvider = 'Local report builder'; state.reports = [{ id: `RP-${Date.now()}`, analysisId: a.id, fileName: a.fileName, createdAt: new Date().toISOString(), provider: 'Local report builder' }, ...state.reports.filter(r => r.analysisId !== a.id)];
   }
+  saveState(); toast('Report ready', 'success'); render();
+}
+function buildLocalReport(a) { return `# SHAKTII PKAP ANALYSIS REPORT\n\nAnalysed file: ${a.fileName}\nGenerated: ${new Date().toLocaleString()}\nRisk score: ${a.metadata.overallRiskScore}/100\n\n## Executive Summary\n${a.executiveSummary}\n\n## Findings\n${a.findings.map((f,i)=>`${i+1}. [${f.severity}] ${f.eventType}: ${f.description}`).join('\n') || 'No findings.'}\n\n## Recommendations\n${a.remediationChecklist.map((r,i)=>`${i+1}. ${r}`).join('\n')}`; }
+
+function downloadActivePdf() {
+  const a = activeAnalysis(); if (!a) return toast('No active analysis.', 'danger');
+  const text = a.report || buildLocalReport(a);
+  const blob = makePdfBlob(text);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a'); link.href = url; link.download = `${a.fileName.replace(/\W+/g,'_')}_PKAP_Report.pdf`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+  toast('PDF download started', 'success');
+}
+function makePdfBlob(text) {
+  const lines = text.replace(/[#*_`|]/g,'').split(/\n/).flatMap(l => l.length > 88 ? l.match(/.{1,88}(\s|$)/g) : [l]).slice(0, 95);
+  const esc = s => String(s || '').replace(/[()\\]/g, '\\$&');
+  const body = lines.map((l,i)=>`BT /F1 10 Tf 50 ${770 - i*13} Td (${esc(l.trim())}) Tj ET`).join('\n');
+  const content = `q 0.15 0.11 0.22 rg 0 0 612 792 re f Q\nBT /F1 18 Tf 50 755 Td (SHAKTII PKAP ANALYSIS REPORT) Tj ET\n${body}`;
+  const objects = [`1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj`, `2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj`, `3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj`, `4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >> endobj`, `5 0 obj << /Length ${content.length} >> stream\n${content}\nendstream endobj`];
+  let pdf = '%PDF-1.4\n'; const offsets = [0]; objects.forEach(o => { offsets.push(pdf.length); pdf += o + '\n'; }); const xref = pdf.length; pdf += `xref\n0 6\n0000000000 65535 f \n` + offsets.slice(1).map(n => String(n).padStart(10,'0') + ' 00000 n ').join('\n') + `\ntrailer << /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return new Blob([pdf], { type: 'application/pdf' });
 }
 
 function render() {
-  ensureAuth();
-  const path = currentPath();
-  if (['/login', '/signup'].includes(path) || !state.user) {
-    app.innerHTML = authPage(path === '/signup');
-    requestAnimationFrame(updateInstallButtons);
-    return;
-  }
-  app.innerHTML = shellTemplate();
-  renderPage();
-  requestAnimationFrame(updateInstallButtons);
+  if (!state.user && !['/login','/signup'].includes(state.route)) history.replaceState({}, '', '/login'), state.route='/login';
+  document.body.dataset.theme = state.settings.theme;
+  if (['/login','/signup'].includes(state.route) || !state.user) app.innerHTML = loginView();
+  else app.innerHTML = shell();
+  if (state.drawer) app.insertAdjacentHTML('beforeend', drawerView(state.drawer));
 }
+function loginView() { return `<main class="pkap-auth"><section class="pkap-login"><img src="/assets/logo.svg?v=22" alt="PWN SHAKTI"><p>PKAP Analyzer</p><h1>Upload. Analyse. Act.</h1><span>Professional log/content analysis with SHAKTII-branded reporting.</span><label>Email</label><input id="email" value="admin@pwnshakti.ai"><label>Password</label><input id="password" type="password" value="demo123"><button class="pkap-btn primary" data-pkap-action="login">Login</button><button class="pkap-btn ghost" data-pkap-action="install">Install App</button>${state.authError ? `<div class="pkap-error">${escapeHtml(state.authError)}</div>`:''}</section></main>`; }
+function shell() { return `<div class="pkap-shell"><aside class="pkap-side"><img src="/assets/logo.svg?v=22" alt="PWN SHAKTI"><nav>${navBtn('/dashboard','Dashboard')}${navBtn('/new-analysis','New Analysis')}${navBtn('/history','History')}${navBtn('/reports','Reports')}${navBtn('/settings','Settings')}</nav><button class="pkap-logout" data-pkap-action="logout">Logout</button></aside><section class="pkap-main"><header><strong>${pageTitle()}</strong><span>${state.analyses.length} analyses stored</span></header><main>${page()}</main><nav class="pkap-bottom">${navBtn('/dashboard','Home')}${navBtn('/new-analysis','Analyze')}${navBtn('/history','History')}${navBtn('/reports','Reports')}${navBtn('/settings','Settings')}</nav></section><div id="chartTooltip" class="chart-tooltip"></div></div>`; }
+function navBtn(path,label) { return `<button class="${state.route.startsWith(path) ? 'active':''}" data-route="${path}">${label}</button>`; }
+function pageTitle(){ if(state.route.startsWith('/analysis/')) return 'Analysis Result'; return ({'/dashboard':'Dashboard','/new-analysis':'New Analysis','/history':'History','/reports':'Reports','/settings':'Settings'}[state.route] || 'PKAP Analyzer'); }
+function page() { const id = currentAnalysisIdFromRoute(); if (id) { state.activeId = id; saveState(); return analysisView(state.analyses.find(a=>a.id===id)); } if(state.route==='/dashboard') return dashboardView(); if(state.route==='/new-analysis') return uploadView(); if(state.route==='/history') return historyView(); if(state.route==='/reports') return reportsView(); if(state.route==='/settings') return settingsView(); return dashboardView(); }
 
-function renderPage() {
-  const outlet = byId('pageOutlet');
-  if (!outlet) return;
-  const path = currentPath();
-  const fileMatch = path.match(/^\/files\/([^/]+)$/);
-  const txMatch = path.match(/^\/blockchain\/([^/]+)$/);
-  const alertMatch = path.match(/^\/security\/alerts\/([^/]+)$/);
-  if (fileMatch) outlet.innerHTML = fileDetailPage(fileMatch[1]);
-  else if (txMatch) outlet.innerHTML = txDetailPage(txMatch[1]);
-  else if (alertMatch) outlet.innerHTML = alertDetailPage(alertMatch[1]);
-  else if (path === '/dashboard') outlet.innerHTML = dashboardPage();
-  else if (path === '/files') outlet.innerHTML = filesPage();
-  else if (path === '/upload') outlet.innerHTML = uploadPage();
-  else if (path === '/access') outlet.innerHTML = accessPage();
-  else if (path === '/blockchain') outlet.innerHTML = blockchainPage();
-  else if (path === '/security') outlet.innerHTML = securityPage();
-  else if (path === '/analytics') outlet.innerHTML = analyticsPage();
-  else if (path === '/activity') outlet.innerHTML = activityPage();
-  else if (path === '/reports') outlet.innerHTML = reportsPage();
-  else if (path === '/notifications') outlet.innerHTML = notificationsPage();
-  else if (path === '/settings') outlet.innerHTML = settingsPage();
-  else if (path === '/profile') outlet.innerHTML = profilePage();
-  else outlet.innerHTML = notFoundPage();
-}
-
-function authPage(signup = false) {
-  return `
-    <main class="auth-screen">
-      <section class="auth-card">
-        <img src="/assets/logo.svg?v=12" alt="PWN SHAKTI" class="auth-logo" />
-        <p class="eyebrow">Secure data command</p>
-        <h1>${signup ? 'Create workspace' : 'Welcome back'}</h1>
-        <p class="muted">Access protected files, blockchain verification, threat monitoring and audit reports from one command application.</p>
-        <label class="field-label">Operator name</label>
-        <input id="loginName" class="input" placeholder="Khushi Jain" value="Khushi Jain" />
-        <label class="field-label">Workspace code</label>
-        <input class="input" placeholder="SHAKTII-SOC-01" value="SHAKTII-SOC-01" />
-        <button class="btn primary full" data-action="login">${signup ? 'Create and enter app' : 'Enter secure app'}</button>
-        <button class="btn secondary full" data-action="install">Install App</button>
-        <p class="auth-switch">${signup ? 'Already have access?' : 'Need a demo account?'} <button data-nav="${signup ? '/login' : '/signup'}">${signup ? 'Login' : 'Create one'}</button></p>
-      </section>
-    </main>`;
-}
-
-function shellTemplate() {
-  const path = currentPath();
-  return `
-    <div class="app-shell ${state.sidebarOpen ? 'sidebar-open' : ''}">
-      <aside class="sidebar">
-        <div class="brand-block">
-          <img src="/assets/logo.svg?v=12" alt="PWN SHAKTI" />
-          <div><strong>PWN SHAKTI</strong><span>Secure data command</span></div>
-        </div>
-        <nav class="side-nav">
-          ${routes.map((r) => `<button class="nav-item ${isActive(path, r.path) ? 'active' : ''}" data-nav="${r.path}"><span>${r.icon}</span>${r.label}</button>`).join('')}
-        </nav>
-      </aside>
-      <div class="shell-backdrop" data-action="toggle-sidebar"></div>
-      <section class="main-shell">
-        <header class="topbar">
-          <button class="icon-btn menu" data-action="toggle-sidebar">☰</button>
-          <div class="top-title"><strong>${titleForPath(path)}</strong><span>${window.SHAKTII_API.base ? 'Connected to backend API' : 'Demo data mode · backend-ready'}</span></div>
-          <div class="top-actions">
-            <button class="status-pill ${window.SHAKTII_API.base ? 'ok' : 'demo'}">${window.SHAKTII_API.base ? 'API Live' : 'Demo Mode'}</button>
-            <button class="btn small" data-action="install">Install App</button>
-            <button class="avatar" data-nav="/profile">${state.user?.name?.[0] || 'S'}</button>
-          </div>
-        </header>
-        <main class="content" id="pageOutlet"></main>
-      </section>
-      <nav class="mobile-nav">
-        ${routes.slice(0, 5).map((r) => `<button class="mobile-nav-item ${isActive(path, r.path) ? 'active' : ''}" data-nav="${r.path}"><span>${r.icon}</span><small>${r.label.split(' ')[0]}</small></button>`).join('')}
-      </nav>
-    </div>`;
-}
-
-function isActive(path, item) { return path === item || (item !== '/dashboard' && path.startsWith(item + '/')); }
-function titleForPath(path) {
-  if (path.startsWith('/files/')) return 'File Details';
-  if (path.startsWith('/blockchain/')) return 'Ledger Record';
-  if (path.startsWith('/security/alerts/')) return 'Security Alert';
-  return routes.find((r) => r.path === path)?.label || 'Workspace';
-}
-
-function pageHeader(overline, title, text, actions = '') {
-  return `<section class="page-header"><div><p class="eyebrow">${overline}</p><h1>${title}</h1><p>${text}</p></div><div class="page-actions">${actions}</div></section>`;
-}
-
-function dashboardPage() {
-  const d = sample();
-  return `
-    ${pageHeader('Overview', 'Security posture at a glance', 'Dashboard is only a high-level overview. Open each module for complete investigation, verification and reporting.', '<button class="btn primary" data-nav="/upload">Upload file</button><button class="btn secondary" data-action="test-alarm">Test alarm</button>')}
-    <section class="stats-grid">
-      ${statCard('Protected files', d.stats.protectedFiles, 'Encrypted and access-controlled', '/files')}
-      ${statCard('Verified files', d.stats.verifiedFiles, 'Blockchain integrity passed', '/blockchain')}
-      ${statCard('Security alerts', d.stats.securityAlerts, 'Open issues needing review', '/security', 'warn')}
-      ${statCard('Integrity score', `${d.stats.integrityScore}%`, 'System health score', '/analytics', 'ok')}
-    </section>
-    <section class="dashboard-grid">
-      <article class="card span-2"><div class="card-head"><h2>Security events over time</h2><button data-nav="/analytics">Open analytics →</button></div>${lineChart(d.analytics.securityEvents)}</article>
-      <article class="card"><div class="card-head"><h2>Threat severity</h2><button data-nav="/security">Investigate →</button></div>${donutLike(d.analytics.severity)}</article>
-      <article class="card"><div class="card-head"><h2>Recent activity</h2><button data-nav="/activity">View all →</button></div>${activityList(d.activity.slice(0, 4))}</article>
-      <article class="card span-2"><div class="card-head"><h2>Protected files</h2><button data-nav="/files">View files →</button></div>${fileTable(d.files.slice(0, 4), false)}</article>
-    </section>`;
-}
-
-function statCard(label, value, helper, nav, tone = '') {
-  return `<button class="stat-card ${tone}" data-nav="${nav}"><span>${label}</span><strong>${value}</strong><small>${helper}</small><em>View details →</em></button>`;
-}
-
-function filesPage() {
-  const term = state.filters.files.toLowerCase();
-  const files = sample().files.filter((f) => `${f.name} ${f.owner} ${f.status} ${f.hash}`.toLowerCase().includes(term));
-  return `
-    ${pageHeader('Secure files', 'Protected documents vault', 'Search, verify, review encryption status and open full file records.', '<button class="btn primary" data-nav="/upload">Upload & encrypt</button>')}
-    <section class="toolbar"><input class="input" data-filter="files" placeholder="Search file, owner, hash or status" value="${escapeHtml(state.filters.files)}" /><button class="btn secondary" data-action="verify-file">Verify file</button></section>
-    <section class="card">${files.length ? fileTable(files, true) : emptyState('No protected files found', 'Change your search or upload a new file.', '/upload', 'Upload file')}</section>`;
-}
-
-function fileTable(files, actions = true) {
-  return `<div class="table-wrap"><table><thead><tr><th>File</th><th>Owner</th><th>Encryption</th><th>Verification</th><th>Status</th><th>Last Accessed</th>${actions ? '<th>Action</th>' : ''}</tr></thead><tbody>${files.map((f) => `<tr><td><strong>${f.name}</strong><small>${f.id} · ${f.type} · ${f.size}</small></td><td>${f.owner}</td><td>${badge(f.encrypted ? 'Encrypted' : 'Open', f.encrypted ? 'ok' : 'warn')}</td><td>${badge(f.verified ? 'Verified' : 'Pending', f.verified ? 'ok' : 'warn')}</td><td>${badge(f.status, f.status === 'Protected' ? 'ok' : 'warn')}</td><td>${f.lastAccessed}</td>${actions ? `<td><button class="link-btn" data-nav="/files/${f.id}">Open →</button></td>` : ''}</tr>`).join('')}</tbody></table></div>`;
-}
-
-function fileDetailPage(id) {
-  const file = sample().files.find((f) => f.id === id) || sample().files[0];
-  const activity = sample().activity.filter((a) => a.resource === file.id || a.ref === file.tx);
-  return `
-    ${pageHeader('File record', file.name, 'Complete file integrity, encryption, owner and blockchain verification details.', '<button class="btn secondary" data-nav="/files">Back to files</button><button class="btn primary" data-action="verify-file" data-file="' + file.id + '">Verify integrity</button>')}
-    <section class="detail-grid">
-      <article class="card span-2"><h2>File information</h2><div class="info-grid">${info('File ID', file.id)}${info('Owner', file.owner)}${info('Type', file.type)}${info('Size', file.size)}${info('Hash', file.hash)}${info('Uploaded', file.uploaded)}${info('Encryption', file.encrypted ? 'AES-256 enabled' : 'Not encrypted')}${info('Verification', file.verified ? 'Verified on ledger' : 'Pending')}</div></article>
-      <article class="card"><h2>Actions</h2><div class="stack"><button class="btn primary" data-nav="/blockchain/${file.tx}">View blockchain record</button><button class="btn secondary" data-nav="/activity">Audit trail</button><button class="btn secondary" data-nav="/reports">Generate report</button></div></article>
-      <article class="card span-3"><div class="card-head"><h2>Access history</h2><button data-nav="/activity">Open audit logs →</button></div>${activity.length ? activityList(activity) : emptyState('No access activity yet', 'Activity will appear after users interact with this file.')}</article>
-    </section>`;
-}
-
-function uploadPage() {
-  const s = state.upload.step;
-  const file = state.upload.file;
-  return `
-    ${pageHeader('Upload workflow', 'Encrypt and verify a file', 'A complete demonstrable flow: choose file, configure protection, process encryption, generate hash and verify ledger.', '<button class="btn secondary" data-nav="/files">View files</button>')}
-    <section class="upload-layout">
-      <aside class="stepper">${[1,2,3,4,5].map((n) => `<div class="step ${n < s ? 'done' : n === s ? 'active' : ''}"><b>${n}</b><span>${['Choose file','Review details','Security options','Encrypt & verify','Success'][n-1]}</span></div>`).join('')}</aside>
-      <article class="card upload-card">${uploadStepContent()}</article>
-    </section>`;
-}
-
-function uploadStepContent() {
-  const s = state.upload.step;
-  if (s === 1) return `<h2>Choose file</h2><p class="muted">Select a document or use the demo file for jury walkthrough.</p><input id="uploadFile" type="file" class="input file-input" /><button class="btn secondary" onclick="window.demoUploadFile()">Use demo file</button><div class="form-actions"><button class="btn primary" data-action="next-upload">Continue</button></div>`;
-  if (s === 2) return `<h2>Review file information</h2><div class="info-grid">${info('Name', state.upload.file?.name || 'incident-evidence-demo.pdf')}${info('Size', state.upload.file ? `${Math.max(1, Math.round(state.upload.file.size / 1024))} KB` : '2.1 MB')}${info('Type', state.upload.file?.type || 'application/pdf')}${info('Owner', state.user.name)}</div><div class="form-actions"><button class="btn secondary" data-action="prev-upload">Back</button><button class="btn primary" data-action="next-upload">Configure protection</button></div>`;
-  if (s === 3) return `<h2>Protection settings</h2><div class="option-list"><label><input type="checkbox" checked> Encrypt file with AES-256 policy</label><label><input type="checkbox" checked> Create blockchain verification record</label><label><input type="checkbox" checked> Restrict access to approved users</label><label><input type="checkbox" checked> Enable activity audit trail</label></div><div class="form-actions"><button class="btn secondary" data-action="prev-upload">Back</button><button class="btn primary" data-action="next-upload">Start processing</button></div>`;
-  if (s === 4) return `<h2>Processing file</h2><p class="muted">Encryption, hashing and ledger preparation are running. This state is backend-ready.</p><div class="process-list"><span>✓ File sanitized</span><span>✓ Encryption policy applied</span><span>✓ SHA-256 hash generated</span><span>✓ Blockchain record queued</span></div><div class="form-actions"><button class="btn secondary" data-action="prev-upload">Back</button><button class="btn primary" data-action="complete-upload">Complete workflow</button></div>`;
-  return `<h2>File protected successfully</h2><p class="muted">The file has been encrypted, logged and prepared for blockchain verification.</p><div class="success-box"><strong>${state.upload.result?.fileId || 'FL-NEW'}</strong><span>${state.upload.result?.tx || 'TX-DEMO'}</span></div><div class="form-actions"><button class="btn secondary" data-nav="/dashboard">Dashboard</button><button class="btn primary" data-nav="/files/${state.upload.result?.fileId || 'FL-005'}">View protected file</button></div>`;
-}
-
-window.demoUploadFile = () => { state.upload.file = { name: 'incident-evidence-demo.pdf', size: 2194000, type: 'application/pdf' }; renderPage(); toast('Demo file selected', 'success'); };
-function nextUploadStep() { if (state.upload.step === 1 && !state.upload.file) window.demoUploadFile(); state.upload.step = Math.min(5, state.upload.step + 1); renderPage(); }
-function prevUploadStep() { state.upload.step = Math.max(1, state.upload.step - 1); renderPage(); }
-async function completeUpload() { const res = await window.SHAKTII_API.upload({ name: state.upload.file?.name || 'incident-evidence-demo.pdf' }); state.upload.result = { fileId: 'FL-005', tx: res.data.tx || 'TX-8848' }; state.upload.step = 5; toast('File encrypted and verified', 'success'); renderPage(); }
-
-function accessPage() {
-  return `${pageHeader('Access control', 'Users, roles and file permissions', 'Manage who can view, verify, download or share protected resources.', '<button class="btn primary">Invite user</button>')}
-    <section class="cards-3"><article class="card"><h2>Admins</h2><strong class="big">04</strong><p>Full security access</p></article><article class="card"><h2>Analysts</h2><strong class="big">09</strong><p>Investigation and verification</p></article><article class="card"><h2>Viewers</h2><strong class="big">05</strong><p>Read-only reports</p></article></section>
-    <section class="card"><h2>Permission matrix</h2><div class="table-wrap"><table><thead><tr><th>Role</th><th>Upload</th><th>Verify</th><th>Contain</th><th>Reports</th></tr></thead><tbody><tr><td>Security Admin</td><td>Yes</td><td>Yes</td><td>Approval</td><td>Yes</td></tr><tr><td>Analyst</td><td>Yes</td><td>Yes</td><td>No</td><td>Yes</td></tr><tr><td>Viewer</td><td>No</td><td>Read</td><td>No</td><td>Read</td></tr></tbody></table></div></section>`;
-}
-
-function blockchainPage() {
-  const txs = sample().ledger;
-  return `${pageHeader('Blockchain ledger', 'Verification records', 'Search and inspect file hashes, record IDs, owners, timestamps and transaction details.', '<button class="btn primary" data-action="verify-file">Verify file</button>')}
-    <section class="card"><div class="table-wrap"><table><thead><tr><th>Transaction</th><th>File</th><th>Hash</th><th>Status</th><th>Owner</th><th>Time</th><th></th></tr></thead><tbody>${txs.map((t) => `<tr><td><strong>${t.id}</strong><small>${t.block}</small></td><td>${t.file}</td><td><code>${t.hash}</code></td><td>${badge(t.status, 'ok')}</td><td>${t.owner}</td><td>${t.time}</td><td><button class="link-btn" data-nav="/blockchain/${t.id}">Details →</button></td></tr>`).join('')}</tbody></table></div></section>`;
-}
-
-function txDetailPage(id) {
-  const tx = sample().ledger.find((t) => t.id === id) || sample().ledger[0];
-  return `${pageHeader('Ledger details', tx.id, 'Complete blockchain verification record.', '<button class="btn secondary" data-nav="/blockchain">Back to ledger</button><button class="btn primary" data-nav="/files/' + tx.fileId + '">Open file</button>')}
-    <section class="detail-grid"><article class="card span-2"><h2>Verification record</h2><div class="info-grid">${info('Record ID', tx.id)}${info('Block', tx.block)}${info('File', tx.file)}${info('Type', tx.type)}${info('Hash', tx.hash)}${info('Status', tx.status)}${info('Owner', tx.owner)}${info('Timestamp', tx.time)}</div></article><article class="card"><h2>Integrity result</h2><div class="result-ok">Verified</div><p class="muted">The file hash matches the ledger record.</p></article></section>`;
-}
-
-function securityPage() {
-  const alerts = sample().alerts;
-  return `${pageHeader('Security monitoring', 'Threats and incident response', 'Track active threats, suspicious events, integrity failures and containment actions.', '<button class="btn danger" data-action="test-alarm">Trigger alarm demo</button>')}
-    <section class="stats-grid"><div class="stat-card"><span>Security score</span><strong>98</strong><small>Excellent posture</small></div><div class="stat-card warn"><span>Active alerts</span><strong>${alerts.filter(a => a.status !== 'Resolved').length}</strong><small>Needs review</small></div><div class="stat-card"><span>Unauthorized attempts</span><strong>12</strong><small>Last 24 hours</small></div><div class="stat-card ok"><span>Contained</span><strong>08</strong><small>Safe actions</small></div></section>
-    <section class="card"><div class="card-head"><h2>Security alerts</h2><button data-action="contain">Contain selected →</button></div><div class="alert-list">${alerts.map(alertCard).join('')}</div></section>`;
-}
-
-function alertCard(a) {
-  return `<button class="alert-row" data-nav="/security/alerts/${a.id}"><div>${badge(a.severity, a.severity === 'Critical' ? 'danger' : a.severity === 'High' ? 'warn' : 'info')}<h3>${a.title}</h3><p>${a.detail}</p></div><span>${a.time}</span></button>`;
-}
-
-function alertDetailPage(id) {
-  const a = sample().alerts.find((x) => x.id === id) || sample().alerts[0];
-  return `${pageHeader('Alert investigation', a.title, a.detail, '<button class="btn secondary" data-nav="/security">Back</button><button class="btn danger" data-action="contain">Contain threat</button>')}
-    <section class="detail-grid"><article class="card span-2"><h2>Incident evidence</h2><div class="info-grid">${info('Alert ID', a.id)}${info('Severity', a.severity)}${info('Status', a.status)}${info('Asset', a.asset)}${info('Source IP', a.ip)}${info('Recommended action', a.recommendation)}</div></article><article class="card"><h2>Alarm facilities</h2><div class="stack"><button class="btn danger" data-action="test-alarm">Test sound/vibration</button><button class="btn primary" data-action="ack-alarm">Acknowledge</button><button class="btn secondary">Escalate</button></div></article></section>`;
-}
-
-function analyticsPage() {
-  const a = sample().analytics;
-  return `${pageHeader('Analytics', 'Operational intelligence', 'Detailed graphs for security events, file protection, verification and user access.', '<div class="segmented"><button class="active">7 Days</button><button>30 Days</button><button>90 Days</button></div>')}
-    <section class="analytics-grid"><article class="card span-2"><h2>Security events over time</h2>${lineChart(a.securityEvents)}</article><article class="card"><h2>Verification success</h2>${barPair('Verified', a.verification[0], 'Pending', a.verification[1])}</article><article class="card"><h2>Files uploaded</h2>${barChart(a.filesUploaded)}</article><article class="card"><h2>Access attempts</h2>${lineChart(a.access)}</article><article class="card"><h2>Blockchain transactions</h2>${barChart(a.blockchain)}</article><article class="card"><h2>Threat categories</h2>${donutLike(a.severity)}</article></section>`;
-}
-
-function activityPage() {
-  const term = state.filters.activity.toLowerCase();
-  const items = sample().activity.filter((a) => `${a.user} ${a.action} ${a.resource} ${a.status} ${a.ref}`.toLowerCase().includes(term));
-  return `${pageHeader('Audit logs', 'Searchable activity history', 'Every upload, verification, access and security action is recorded for accountability.', '<button class="btn secondary" data-nav="/reports">Export report</button>')}
-    <section class="toolbar"><input class="input" data-filter="activity" placeholder="Search user, action, resource or status" value="${escapeHtml(state.filters.activity)}" /></section>
-    <section class="card">${items.length ? `<div class="table-wrap"><table><thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Resource</th><th>IP/Device</th><th>Status</th><th>Reference</th></tr></thead><tbody>${items.map((a) => `<tr><td>${a.time}</td><td>${a.user}</td><td>${a.action}</td><td>${a.resource}</td><td>${a.ip}</td><td>${badge(a.status, a.status === 'Success' ? 'ok' : 'warn')}</td><td>${a.ref}</td></tr>`).join('')}</tbody></table></div>` : emptyState('No audit entries found', 'Try a different search term.')}</section>`;
-}
-
-function reportsPage() {
-  return `${pageHeader('Reports', 'Generate and review reports', 'Security summaries, file integrity reports, access reports, blockchain reports and threat analysis.', '<button class="btn primary" data-action="generate-report">Generate report</button>')}
-    <section class="cards-3">${sample().reports.map((r) => `<article class="card report"><p class="eyebrow">${r.type}</p><h2>${r.title}</h2><p>${r.created}</p>${badge(r.status, 'ok')}<button class="btn secondary full">Open report</button></article>`).join('')}</section>`;
-}
-
-function notificationsPage() {
-  return `${pageHeader('Notifications', 'Alerts and acknowledgement', 'Configure app alarms, browser notifications, vibration and escalation reminders.', '<button class="btn danger" data-action="test-alarm">Test critical alarm</button>')}
-    <section class="card"><h2>Alarm facilities</h2><div class="option-list"><label><input type="checkbox" checked> Visual critical overlay</label><label><input type="checkbox" checked> Browser notification</label><label><input type="checkbox" checked> Phone vibration when supported</label><label><input type="checkbox" checked> Sound alarm after user interaction</label><label><input type="checkbox" checked> SLA escalation reminder</label></div></section>`;
-}
-
-function settingsPage() {
-  return `${pageHeader('Settings', 'Application preferences', 'Backend endpoint, PWA state and security preferences.', '<button class="btn primary" data-action="save-settings">Save settings</button>')}
-    <section class="card settings"><label class="field-label">Docker backend API URL</label><input class="input" value="${escapeHtml(window.SHAKTII_API.base || '')}" placeholder="http://localhost:8000" /><p class="helper">You can also open the app with ?api=http://localhost:8000</p><label class="field-label">PWA status</label><div class="status-line">${state.installed || isStandalone() ? 'App installed / standalone mode detected' : 'Browser mode. Install CTA will show when available.'}</div></section>`;
-}
-
-function profilePage() {
-  return `${pageHeader('Profile', 'Operator account', 'Demo operator profile for the installed app.', '<button class="btn secondary" data-action="logout">Logout</button>')}
-    <section class="card profile"><div class="profile-avatar">${state.user.name[0]}</div><h2>${state.user.name}</h2><p>${state.user.role}</p><div class="info-grid">${info('Email', state.user.email)}${info('Workspace', 'SHAKTII-SOC-01')}${info('MFA', 'Required')}${info('Role', state.user.role)}</div></section>`;
-}
-
-function notFoundPage() { return `${pageHeader('Page not found', 'This route is not available', 'Use the sidebar to open a valid SHAKTII application page.', '<button class="btn primary" data-nav="/dashboard">Go to dashboard</button>')}`; }
-
-function emptyState(title, text, nav = '', label = '') { return `<div class="empty"><h3>${title}</h3><p>${text}</p>${nav ? `<button class="btn primary" data-nav="${nav}">${label}</button>` : ''}</div>`; }
-function info(label, value) { return `<div class="info"><span>${label}</span><strong>${value}</strong></div>`; }
-function badge(text, tone = 'info') { return `<span class="badge ${tone}">${text}</span>`; }
-function activityList(items) { return `<div class="activity-list">${items.map((a) => `<div class="activity-item"><i></i><div><strong>${a.action}</strong><p>${a.user} · ${a.resource} · ${a.time}</p></div><span>${a.status}</span></div>`).join('')}</div>`; }
-function lineChart(values) { const max = Math.max(...values, 1); return `<div class="line-chart">${values.map((v, i) => `<span title="Day ${i+1}: ${v}" style="height:${24 + (v/max)*76}%"></span>`).join('')}</div>`; }
-function barChart(values) { const max = Math.max(...values, 1); return `<div class="bar-chart">${values.map((v, i) => `<div><span style="height:${20 + (v/max)*120}px" title="${v}"></span><small>${i+1}</small></div>`).join('')}</div>`; }
-function barPair(a, av, b, bv) { const total = av + bv; return `<div class="pair"><div><label>${a}</label><span><i style="width:${(av/total)*100}%"></i></span><b>${av}</b></div><div><label>${b}</label><span><i class="warn" style="width:${(bv/total)*100}%"></i></span><b>${bv}</b></div></div>`; }
-function donutLike(obj) { const entries = Object.entries(obj); return `<div class="severity-list">${entries.map(([k,v]) => `<div><span>${k}</span><strong>${v}</strong><i style="width:${v * 9}%"></i></div>`).join('')}</div>`; }
-
-function triggerAlarm() {
-  alarmLayer.classList.add('show');
-  toast('Critical alarm triggered', 'danger');
-  if ('vibrate' in navigator) navigator.vibrate([260, 120, 260, 120, 420]);
-  if ('Notification' in window) {
-    if (Notification.permission === 'granted') new Notification('PWN SHAKTI Critical Alert', { body: 'Suspicious admin session requires acknowledgement.' });
-    else if (Notification.permission !== 'denied') Notification.requestPermission().then((p) => { if (p === 'granted') new Notification('PWN SHAKTI Critical Alert', { body: 'Suspicious admin session requires acknowledgement.' }); });
-  }
-  try {
-    const audio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=');
-    audio.play().catch(() => undefined);
-  } catch (_) {}
-}
-function acknowledgeAlarm() { alarmLayer.classList.remove('show'); toast('Alert acknowledged. SLA timer stopped.', 'success'); navigate('/security/alerts/AL-901'); }
-async function containThreat() { await window.SHAKTII_API.contain({ alertId: 'AL-901' }); toast('Containment queued: IP block + session freeze', 'success'); }
-async function verifyFile(fileId) { const res = await window.SHAKTII_API.verify({ fileId }); toast(`Verification successful: ${res.data.tx}`, 'success'); }
-async function generateReport() { const res = await window.SHAKTII_API.report({ type: 'security-summary' }); toast(`Report generated: ${res.data.reportId}`, 'success'); }
+function dashboardView() { const a = activeAnalysis(); if (!a) return emptyView('No analyses yet','Upload your first log/content file to generate PKAP analytics.','Analyse Question Paper / Logs','/new-analysis'); return `<section class="pkap-hero"><div><p>Latest Analysis</p><h1>${escapeHtml(a.fileName)}</h1><span>Processed ${new Date(a.createdAt).toLocaleString()} · ${a.provider}</span></div><button class="pkap-btn primary" data-route="/analysis/${a.id}">Open Result</button><button class="pkap-btn ghost" data-pkap-action="new-analysis">New Analysis</button></section>${summaryGrid(a)}<section class="pkap-grid two"><article class="pkap-card"><div class="card-head"><h2>Risk trend</h2><button data-route="/analysis/${a.id}">Details →</button></div>${lineSvg(Object.values(a.severityBreakdown),'Severity weight')}</article><article class="pkap-card"><div class="card-head"><h2>Severity distribution</h2><button data-pkap-action="drawer" data-drawer="severity">Inspect →</button></div>${severityBars(a)}</article></section>`; }
+function uploadView() { if (state.processing) return processingView(); const err = validateFile(activeFile); return `<section class="pkap-pagehead"><h1>New PKAP Analysis</h1><p>Upload a supported log/content file. The dashboard will use only processed data from this file.</p></section><section class="upload-panel"><label class="dropzone"><input id="fileInput" type="file" accept=".log,.txt,.json,.csv,.md,.yaml,.yml" hidden><b>Drop file here or browse</b><span>Supported: LOG, TXT, JSON, CSV, MD, YAML · Max 8 MB</span></label>${activeFile ? `<div class="file-preview"><div><strong>${escapeHtml(activeFile.name)}</strong><span>${(activeFile.size/1024).toFixed(1)} KB · ready to process</span></div><button data-pkap-action="clear-file">Remove</button></div>`:''}${activeFile && err ? `<div class="pkap-error">${escapeHtml(err)}</div>`:''}<button class="pkap-btn primary wide" data-pkap-action="start-analysis" ${!activeFile || err ? 'disabled':''}>Process & Analyse</button></section>`; }
+function processingView() { const p = state.processing; return `<section class="processing"><h1>${p.error ? 'Processing failed' : 'Processing analysis'}</h1><p>${escapeHtml(p.error || 'Please wait while PKAP reads, redacts, analyses and prepares the dashboard.')}</p><div class="progress"><i style="width:${p.percent}%"></i></div><strong>${p.percent}%</strong><span>${escapeHtml(p.stage)}</span>${p.error ? '<button class="pkap-btn primary" data-pkap-action="new-analysis">Try again</button>':''}</section>`; }
+function renderProcessingOnly(){ const main = $('.pkap-main main'); if(main) main.innerHTML = processingView(); }
+function analysisView(a) { if (!a) return emptyView('Analysis not found','Open History and select a valid analysis.','Go to History','/history'); return `<section class="result-top"><div><p>Completed analysis</p><h1>${escapeHtml(a.fileName)}</h1><span>${new Date(a.createdAt).toLocaleString()} · ${a.provider}</span></div><button class="pkap-btn ghost" data-pkap-action="new-analysis">New Analysis</button><button class="pkap-btn primary" data-pkap-action="generate-report">Generate Report</button><button class="pkap-btn secondary" data-pkap-action="download-pdf">Download PDF</button></section>${summaryGrid(a)}<section class="pkap-grid two"><article class="pkap-card"><h2>Difficulty / severity distribution</h2>${severityBars(a)}</article><article class="pkap-card"><h2>IOC distribution</h2>${iocBars(a)}</article><article class="pkap-card"><h2>Event quality analysis</h2>${qualityBars(a)}</article><article class="pkap-card"><h2>Correct-answer pattern equivalent</h2><p class="muted">PKAP backend is log-focused, not question-paper answer-key focused. This section is intentionally not fabricated.</p>${emptyMini('No answer-key data in backend response')}</article></section><section class="pkap-card"><div class="card-head"><h2>Detected issues / findings</h2><button data-pkap-action="drawer" data-drawer="findings">View all →</button></div>${findingsList(a.findings.slice(0,6))}</section>${a.report ? `<section class="pkap-card report-preview"><h2>AI Report Preview</h2><pre>${escapeHtml(a.report.slice(0,1600))}</pre></section>`:''}`; }
+function historyView(){ if(!state.analyses.length) return emptyView('History is empty','Your analysed files will appear here after processing.','New Analysis','/new-analysis'); return `<section class="pkap-pagehead"><h1>Analysis History</h1><p>Reopen previously processed PKAP analyses.</p></section><section class="pkap-card list">${state.analyses.map(a=>`<button data-route="/analysis/${a.id}"><strong>${escapeHtml(a.fileName)}</strong><span>${new Date(a.createdAt).toLocaleString()} · Risk ${a.metadata.overallRiskScore}/100 · ${a.findings.length} findings</span></button>`).join('')}</section>`; }
+function reportsView(){ if(!state.reports.length) return emptyView('No reports generated yet','Generate a report from any analysis result, then download PDF.','Open Latest Analysis', activeAnalysis()?`/analysis/${activeAnalysis().id}`:'/new-analysis'); return `<section class="pkap-pagehead"><h1>Reports</h1><p>Generated report records. Open an analysis to regenerate or download PDF.</p></section><section class="pkap-card list">${state.reports.map(r=>`<button data-route="/analysis/${r.analysisId}"><strong>${escapeHtml(r.fileName)}</strong><span>${new Date(r.createdAt).toLocaleString()} · ${r.provider}</span></button>`).join('')}</section>`; }
+function settingsView(){ return `<section class="pkap-pagehead"><h1>Settings</h1><p>Preferences persist locally and influence analysis/report behaviour.</p></section><section class="settings-grid"><article class="pkap-card"><h2>Appearance</h2>${select('theme',['dark','light','system'])}</article><article class="pkap-card"><h2>Analysis Preferences</h2>${check('strictDuplicates','Strict duplicate detection')}${check('nearDuplicate','Near-duplicate detection')}${check('severityAnalysis','Severity analysis')}${check('iocExtraction','IOC extraction')}${check('languageValidation','Language validation')}</article><article class="pkap-card"><h2>Report Preferences</h2>${check('includeCharts','Include chart summaries')}${check('includeFindings','Include question/finding-level list')}${check('includeRecommendations','Include recommendations')}${check('includeAISummary','Include AI summary')}</article><article class="pkap-card"><h2>Application Information</h2><p>API mode: ${window.SHAKTII_API.base || 'same-origin Vercel functions'}</p><p>App version: PKAP PWA v22</p><button class="pkap-btn primary" data-pkap-action="save-settings">Save settings</button></article></section>`; }
+function select(k, opts){ return `<label class="setting"><span>${k}</span><select data-setting="${k}">${opts.map(o=>`<option ${state.settings[k]===o?'selected':''}>${o}</option>`).join('')}</select></label>`; }
+function check(k,label){ return `<label class="setting"><span>${label}</span><input type="checkbox" data-setting="${k}" ${state.settings[k]?'checked':''}></label>`; }
+function emptyView(title,text,label,route){ return `<section class="empty-state"><img src="/assets/logo.svg?v=22" alt="PWN SHAKTI"><h1>${title}</h1><p>${text}</p><button class="pkap-btn primary" data-route="${route}">${label}</button></section>`; }
+function summaryGrid(a){ const sev=a.severityBreakdown, total=a.findings.length; return `<section class="kpi-grid"><button data-pkap-action="drawer" data-drawer="risk"><b>${a.metadata.overallRiskScore}</b><span>Overall Risk Score</span><small>Calculated from actual findings</small></button><button data-pkap-action="drawer" data-drawer="severity"><b>${sev.critical+sev.high}</b><span>High/Critical</span><small>Needs review</small></button><button data-pkap-action="drawer" data-drawer="findings"><b>${total}</b><span>Issues Detected</span><small>Click to inspect</small></button><button data-pkap-action="drawer" data-drawer="iocs"><b>${a.iocs.length}</b><span>IOCs Extracted</span><small>IP / domain / hash</small></button><button><b>${a.metadata.privacyMasked || 0}</b><span>Privacy Masked</span><small>Secrets redacted pre-analysis</small></button></section>`; }
+function severityBars(a){ const s=a.severityBreakdown, total=Math.max(1,Object.values(s).reduce((x,y)=>x+y,0)); return `<div class="sv-bars">${['critical','high','medium','low','info'].map(k=>`<div data-tip="${k}: ${s[k]||0} events · ${pct(s[k],total)}%"><span>${k}</span><i><b style="width:${pct(s[k],total)}%"></b></i><em>${s[k]||0}</em></div>`).join('')}</div>`; }
+function iocBars(a){ const g=a.iocs.reduce((m,x)=>{m[x.type]=(m[x.type]||0)+1;return m;},{}), total=Math.max(1,a.iocs.length); return `<div class="sv-bars">${['IP','Domain','Hash','User'].map(k=>`<div data-tip="${k}: ${g[k]||0} IOCs · ${pct(g[k],total)}%"><span>${k}</span><i><b style="width:${pct(g[k],total)}%"></b></i><em>${g[k]||0}</em></div>`).join('')}</div>`; }
+function qualityBars(a){ const vals={Excellent:Math.max(0,(a.severityBreakdown.info||0)),Good:a.severityBreakdown.low||0,Average:a.severityBreakdown.medium||0,'Needs Improvement':(a.severityBreakdown.high||0)+(a.severityBreakdown.critical||0)}; const total=Math.max(1,Object.values(vals).reduce((x,y)=>x+y,0)); return `<div class="sv-bars">${Object.entries(vals).map(([k,v])=>`<div data-tip="${k}: ${v} records · ${pct(v,total)}%"><span>${k}</span><i><b style="width:${pct(v,total)}%"></b></i><em>${v}</em></div>`).join('')}</div>`; }
+function lineSvg(vals,label){ const max=Math.max(1,...vals); const points=vals.map((v,i)=>`${20+i*(260/(vals.length-1||1))},${150-(v/max)*110}`).join(' '); return `<svg class="spark" viewBox="0 0 300 170" role="img" aria-label="${label}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#a855f7" stop-opacity=".55"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/></linearGradient></defs><polyline points="${points}" fill="none" stroke="#a855f7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>${vals.map((v,i)=>`<circle cx="${20+i*(260/(vals.length-1||1))}" cy="${150-(v/max)*110}" r="5" fill="#fff" data-tip="${label}: ${v}"/>`).join('')}</svg>`; }
+function findingsList(items){ if(!items.length) return emptyMini('No findings detected'); return `<div class="finding-list">${items.map(f=>`<article><strong>${escapeHtml(f.eventType)}</strong><span class="pill ${String(f.severity).toLowerCase()}">${f.severity}</span><p>${escapeHtml(f.description)}</p><small>${escapeHtml(f.sourceIP)} · ${escapeHtml(f.timestamp)}</small></article>`).join('')}</div>`; }
+function emptyMini(t){ return `<div class="mini-empty">${t}</div>`; }
+function drawerView(type){ const a=activeAnalysis(); if(!a) return ''; let title='Details', body=''; if(type==='findings'){ title='Detected Findings'; body=findingsList(a.findings); } else if(type==='iocs'){ title='Extracted IOCs'; body=`<div class="finding-list">${a.iocs.map(i=>`<article><strong>${escapeHtml(i.value)}</strong><span class="pill info">${i.type}</span><p>Reputation: ${i.reputation}</p></article>`).join('') || emptyMini('No IOCs')}</div>`; } else if(type==='severity'){ title='Severity Drill-down'; body=severityBars(a)+findingsList(a.findings); } else { title='Risk Score Explanation'; body=`<p>Score ${a.metadata.overallRiskScore}/100 is based on severity weighting, findings count and IOC extraction from the uploaded file.</p>${severityBars(a)}`; } return `<div class="drawer-backdrop" data-pkap-action="close-drawer"><aside class="drawer" onclick="event.stopPropagation()"><button data-pkap-action="close-drawer">×</button><h2>${title}</h2>${body}</aside></div>`; }
 
 render();
