@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwn-shakti-secure-command-v15';
+const CACHE_NAME = 'pwn-shakti-secure-command-v16';
 const APP_SHELL = [
   '/',
   '/index.html',
