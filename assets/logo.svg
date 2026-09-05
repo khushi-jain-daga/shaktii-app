@@ -1,42 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" width="720" height="220" role="img" aria-label="PWN SHAKTI logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="640" height="512" role="img" aria-label="PWN SHAKTI official shield logo">
   <defs>
-    <linearGradient id="p" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#d6b4ff"/>
-      <stop offset="0.52" stop-color="#8b35ff"/>
-      <stop offset="1" stop-color="#4b12c9"/>
+    <linearGradient id="purple" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d8b4ff"/>
+      <stop offset="0.38" stop-color="#9b5cff"/>
+      <stop offset="1" stop-color="#5b21d6"/>
     </linearGradient>
-    <linearGradient id="s" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="0.5" stop-color="#d8d8df"/>
-      <stop offset="1" stop-color="#7d7f89"/>
+      <stop offset="0.55" stop-color="#d7d9e0"/>
+      <stop offset="1" stop-color="#777b86"/>
     </linearGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="3" result="b"/>
-      <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.62 0 0 0 0 0.26 0 0 0 0 1 0 0 0 .75 0"/>
-      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.61 0 0 0 0 0.36 0 0 0 0 1 0 0 0 .45 0" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
-  <rect width="720" height="220" rx="34" fill="#05050a"/>
-  <g transform="translate(150 20) scale(.64)" filter="url(#glow)">
-    <path d="M180 10 C130 42 86 52 46 56 L46 105" fill="none" stroke="url(#s)" stroke-width="18"/>
-    <path d="M180 10 C229 42 273 52 313 56 L313 105" fill="none" stroke="url(#p)" stroke-width="18"/>
-    <path d="M47 145 C67 210 111 254 180 286" fill="none" stroke="url(#s)" stroke-width="18"/>
-    <path d="M313 145 C293 210 249 254 180 286" fill="none" stroke="url(#p)" stroke-width="18"/>
-    <path d="M180 10 L180 286" stroke="#252936" stroke-width="5" opacity=".9"/>
-    <path d="M-80 92 H-30 L4 126 H82 L118 92 H144" stroke="url(#p)" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M-108 128 H46 L92 128" stroke="url(#p)" stroke-width="9" fill="none" stroke-linecap="round"/>
-    <path d="M-72 166 H40 L76 145 H143" stroke="url(#p)" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="-88" cy="92" r="10" fill="#07070b" stroke="url(#p)" stroke-width="7"/>
-    <circle cx="-118" cy="128" r="10" fill="#07070b" stroke="url(#p)" stroke-width="7"/>
-    <circle cx="-82" cy="166" r="10" fill="#07070b" stroke="url(#p)" stroke-width="7"/>
-    <circle cx="144" cy="92" r="10" fill="#07070b" stroke="url(#p)" stroke-width="7"/>
-    <circle cx="146" cy="128" r="10" fill="#07070b" stroke="url(#p)" stroke-width="7"/>
-    <circle cx="146" cy="145" r="10" fill="#07070b" stroke="url(#p)" stroke-width="7"/>
-    <path d="M120 132 H214 L230 68 L250 198 L266 104 L280 132 H320" stroke="url(#p)" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M326 132 H360" stroke="url(#p)" stroke-width="9" stroke-linecap="round" stroke-dasharray="2 18"/>
-  </g>
-  <g transform="translate(42 164)">
-    <text x="0" y="0" font-family="Arial Black, Impact, sans-serif" font-size="54" letter-spacing="8" fill="url(#p)">PWN</text>
-    <text x="250" y="0" font-family="Arial Black, Impact, sans-serif" font-size="54" letter-spacing="7" fill="url(#s)">SHAKTI</text>
+  <rect width="640" height="512" fill="transparent"/>
+  <g filter="url(#glow)" transform="translate(0 8)">
+    <path d="M322 42C272 82 215 102 155 108v84" fill="none" stroke="url(#silver)" stroke-width="22" stroke-linejoin="round"/>
+    <path d="M322 42c50 40 107 60 167 66v84" fill="none" stroke="url(#purple)" stroke-width="22" stroke-linejoin="round"/>
+    <path d="M156 250c18 88 77 153 166 196" fill="none" stroke="url(#silver)" stroke-width="22" stroke-linejoin="round"/>
+    <path d="M488 250c-18 88-77 153-166 196" fill="none" stroke="url(#purple)" stroke-width="22" stroke-linejoin="round"/>
+    <path d="M322 42v404" stroke="#161922" stroke-width="7" opacity=".9"/>
+    <path d="M12 194h82l46 42h91l47-48h49" stroke="url(#purple)" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M0 252h110l44 0h142" stroke="url(#purple)" stroke-width="12" fill="none" stroke-linecap="round"/>
+    <path d="M66 315h84l38-36h85" stroke="url(#purple)" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M188 354l30-26h57l33 30h39" stroke="url(#purple)" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="20" cy="194" r="12" fill="#05060a" stroke="url(#purple)" stroke-width="8"/>
+    <circle cx="80" cy="252" r="12" fill="#05060a" stroke="url(#purple)" stroke-width="8"/>
+    <circle cx="73" cy="315" r="12" fill="#05060a" stroke="url(#purple)" stroke-width="8"/>
+    <circle cx="195" cy="354" r="12" fill="#05060a" stroke="url(#purple)" stroke-width="8"/>
+    <circle cx="327" cy="188" r="12" fill="#05060a" stroke="url(#purple)" stroke-width="8"/>
+    <circle cx="347" cy="358" r="12" fill="#05060a" stroke="url(#purple)" stroke-width="8"/>
+    <path d="M257 267h92l25-96 30 191 35-130 18 35h63" stroke="url(#purple)" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M533 267h95" stroke="url(#purple)" stroke-width="12" stroke-linecap="round" stroke-dasharray="3 21"/>
+    <path d="M640 267h1" stroke="url(#purple)" stroke-width="12" stroke-linecap="round"/>
   </g>
 </svg>
