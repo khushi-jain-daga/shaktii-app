@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwn-shakti-command-v8';
+const CACHE_NAME = 'pwn-shakti-command-v10';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './style.css', './app.js', './assets/logo.svg'];
 
 self.addEventListener('install', (event) => {
@@ -20,4 +20,14 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
   );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    for (const client of list) {
+      if ('focus' in client) return client.focus();
+    }
+    if (clients.openWindow) return clients.openWindow('./?from=notification');
+  }));
 });
