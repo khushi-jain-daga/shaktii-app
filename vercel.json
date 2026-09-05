@@ -1,5 +1,8 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/((?!assets/|style.css|app.js|api.js|data.js|sw.js|manifest.webmanifest).*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
