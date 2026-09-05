@@ -1,13 +1,15 @@
-const CACHE_NAME = 'pwn-shakti-pkap-workflow-v25';
+const CACHE_NAME = 'pwn-shakti-pkap-workflow-v26';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
   '/pkap-product.css',
   '/experience-boost.css',
+  '/mobile-sidebar-fix.css',
   '/api.js',
   '/app.js',
   '/experience-boost.js',
+  '/mobile-sidebar-fix.js',
   '/assets/logo.svg',
   '/assets/icon-192.svg',
   '/assets/icon-512.svg'
