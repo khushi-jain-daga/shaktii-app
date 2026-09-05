@@ -9,11 +9,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="PWN SHAKTI" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="/manifest.webmanifest?v=18" />
-  <link rel="icon" href="/assets/icon-192.svg?v=18" />
-  <link rel="apple-touch-icon" href="/assets/icon-192.svg?v=18" />
-  <link rel="stylesheet" href="/style.css?v=18" />
-  <link rel="stylesheet" href="/mobile-fix.css?v=18" />
+  <link rel="manifest" href="/manifest.webmanifest?v=19" />
+  <link rel="icon" href="/assets/icon-192.svg?v=19" />
+  <link rel="apple-touch-icon" href="/assets/icon-192.svg?v=19" />
+  <link rel="stylesheet" href="/style.css?v=19" />
+  <link rel="stylesheet" href="/mobile-fix.css?v=19" />
   <title>PWN SHAKTI — Secure Data Command</title>
 </head>
 <body>
@@ -34,13 +34,14 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="/data.js?v=18"></script>
-  <script src="/api.js?v=18"></script>
-  <script src="/app.js?v=18"></script>
-  <script src="/install-fix.js?v=18"></script>
+  <script src="/data.js?v=19"></script>
+  <script src="/api.js?v=19"></script>
+  <script src="/app.js?v=19"></script>
+  <script src="/install-fix.js?v=19"></script>
+  <script src="/alarm-engine.js?v=19"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js?v=18').catch(() => undefined));
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js?v=19').catch(() => undefined));
     }
   </script>
 </body>
