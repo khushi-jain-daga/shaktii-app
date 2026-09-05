@@ -1,0 +1,148 @@
+/* Polished chart system: mobile-safe, SaaS-style, no overflow */
+.chart-pro {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-top: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018)),
+    radial-gradient(circle at 20% 0%, rgba(139,92,246,.16), transparent 34%),
+    #090c16;
+  overflow: hidden;
+}
+
+.chart-pro svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.chart-caption-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 0 16px 14px;
+  color: #8d95a8;
+  font-size: 11px;
+  line-height: 1;
+  text-align: center;
+}
+
+.chart-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px 0;
+  color: #cdd4e5;
+  font-size: 13px;
+}
+
+.chart-summary b {
+  color: #f7f7fb;
+  font-size: 18px;
+}
+
+.severity-pro {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.severity-pro-row {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.severity-pro-label {
+  color: #cdd4e5;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.severity-pro-track {
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, .13);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.severity-pro-fill {
+  display: block;
+  height: 100%;
+  min-width: 7%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #a855f7, #ec4899, #fb7185);
+  box-shadow: 0 0 16px rgba(168,85,247,.28);
+}
+
+.severity-pro-count {
+  text-align: right;
+  color: #f7f7fb;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.chart-bars-pro {
+  width: 100%;
+  margin-top: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 18px;
+  background: #090c16;
+  overflow: hidden;
+}
+
+@media (max-width: 860px) {
+  .chart-pro,
+  .chart-bars-pro,
+  .severity-pro {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .chart-pro svg,
+  .chart-bars-pro svg {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .chart-caption-row {
+    padding: 0 10px 12px;
+    font-size: 10px;
+  }
+
+  .chart-summary {
+    padding: 12px 12px 0;
+    font-size: 12px;
+  }
+
+  .chart-summary b {
+    font-size: 16px;
+  }
+
+  .severity-pro-row {
+    grid-template-columns: 70px minmax(0, 1fr) 24px !important;
+    gap: 8px !important;
+  }
+
+  .severity-pro-label,
+  .severity-pro-count {
+    font-size: 12px !important;
+  }
+
+  .line-chart,
+  .bar-chart,
+  .severity-list {
+    display: none !important;
+  }
+}
