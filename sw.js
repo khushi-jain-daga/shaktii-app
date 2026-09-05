@@ -1,14 +1,16 @@
-const CACHE_NAME = 'pwn-shakti-secure-command-v18';
+const CACHE_NAME = 'pwn-shakti-secure-command-v20';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
   '/style.css',
   '/mobile-fix.css',
+  '/alarm-polish.css',
   '/data.js',
   '/api.js',
   '/app.js',
   '/install-fix.js',
+  '/alarm-engine.js',
   '/assets/logo.svg',
   '/assets/icon-192.svg',
   '/assets/icon-512.svg'
