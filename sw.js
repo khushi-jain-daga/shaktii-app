@@ -1,5 +1,5 @@
-const CACHE_NAME = 'pwn-shakti-mobile-command-v1';
-const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './assets/logo.svg'];
+const CACHE_NAME = 'pwn-shakti-mobile-command-v4';
+const APP_SHELL = ['./', './index.html', './style.css', './app.js', './manifest.webmanifest', './assets/logo.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
