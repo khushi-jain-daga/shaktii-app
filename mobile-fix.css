@@ -59,6 +59,63 @@ th,
 .upload-card {
   overflow-wrap: break-word;
 }
+.install-help {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, .72);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.install-help-card {
+  width: min(420px, 94vw);
+  position: relative;
+  border: 1px solid rgba(139, 92, 246, .32);
+  border-radius: 24px;
+  background: #0b0e19;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .45);
+  padding: 24px;
+  color: #f5f7fb;
+}
+.install-help-card img {
+  display: block;
+  width: 148px;
+  height: auto;
+  margin: 0 auto 16px;
+}
+.install-help-card h2 {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+.install-help-card p,
+.install-help-card li {
+  color: #b9c0d0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.install-help-card ol {
+  margin: 14px 0;
+  padding-left: 22px;
+}
+.install-help-card .helper {
+  margin-bottom: 0;
+  color: #c4a7ff;
+}
+.install-help-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,.05);
+  color: #fff;
+  font-size: 22px;
+}
 @media (max-width: 860px) {
   body {
     background: #050712 !important;
