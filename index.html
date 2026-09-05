@@ -8,75 +8,89 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="PWN SHAKTI" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="manifest.webmanifest?v=8" />
-  <link rel="icon" href="assets/logo.svg?v=8" />
-  <link rel="apple-touch-icon" href="assets/logo.svg?v=8" />
-  <link rel="stylesheet" href="style.css?v=8" />
-  <title>PWN SHAKTI — Edge Command</title>
+  <link rel="manifest" href="manifest.webmanifest?v=10" />
+  <link rel="icon" href="assets/logo.svg?v=10" />
+  <link rel="apple-touch-icon" href="assets/logo.svg?v=10" />
+  <link rel="stylesheet" href="style.css?v=10" />
+  <title>PWN SHAKTI — Mobile Incident Command</title>
 </head>
 <body>
-  <div class="noise"></div>
+  <div class="bg-noise"></div>
   <div class="boot" id="boot">
-    <img src="assets/logo.svg?v=8" alt="PWN SHAKTI" class="boot-logo" />
-    <div class="boot-terminal">
-      <div class="terminal-head"><span></span><span></span><span></span><b>node edge-command.js</b></div>
+    <img src="assets/logo.svg?v=10" alt="PWN SHAKTI" class="boot-logo" />
+    <div class="boot-box">
+      <div class="terminal-bar"><i></i><i></i><i></i><b>node shaktii-edge.js</b></div>
       <div class="boot-lines" id="bootLines"></div>
     </div>
   </div>
 
-  <main class="phone-shell">
-    <header class="app-head">
-      <img src="assets/logo.svg?v=8" alt="PWN SHAKTI" class="brand-logo" />
-      <button class="live-chip" id="backendChip"><i></i><span>mock bus</span></button>
+  <main class="phone">
+    <header class="topbar">
+      <img src="assets/logo.svg?v=10" alt="PWN SHAKTI" class="logo" />
+      <button class="install" id="installBtn">Install</button>
     </header>
 
-    <section class="hero-card" id="heroCard">
-      <div class="mini-label">operator command flow</div>
-      <h1 id="stageTitle">Waiting for edge telemetry</h1>
-      <p id="stageCopy">No tabs. No passive dashboard. Start the command flow and the app will move step-by-step like a live incident console.</p>
-      <div class="stage-strip" id="stageStrip"></div>
+    <section class="status-card" id="statusCard">
+      <div class="status-top">
+        <span class="eyebrow" id="stageNo">STAGE 00</span>
+        <span class="live" id="sourceBadge"><i></i> demo bus</span>
+      </div>
+      <h1 id="title">Edge command ready</h1>
+      <p id="subtitle">Installable lightweight mobile app for jury demo. It works now with a local event bus and is ready for Docker backend/SSE integration.</p>
+      <div class="progress" id="progress"></div>
     </section>
 
-    <section class="incident-card" id="incidentCard">
-      <div class="card-top">
-        <span class="severity safe" id="severity">secure</span>
-        <span class="tiny" id="incidentClock">standby</span>
-      </div>
-      <h2 id="incidentTitle">Edge channel idle</h2>
-      <p id="incidentBody">Router firmware and Docker backend can plug into this flow later. Until then this app uses a realistic local event bus.</p>
-      <div class="score-row">
-        <div><small>Risk</small><strong id="riskScore">18</strong></div>
-        <div><small>Confidence</small><strong id="confidence">0%</strong></div>
-        <div><small>SLA</small><strong id="sla">--</strong></div>
-      </div>
+    <section class="compact-grid">
+      <div class="mini"><span>risk</span><b id="risk">18</b><small id="riskText">baseline</small></div>
+      <div class="mini"><span>confidence</span><b id="confidence">0%</b><small>model signal</small></div>
+      <div class="mini"><span>sla</span><b id="sla">--</b><small>ack timer</small></div>
+      <div class="mini"><span>alarm</span><b id="alarmState">OFF</b><small>sound/vibrate</small></div>
     </section>
 
-    <section class="work-card" id="workCard">
-      <div class="work-head">
-        <span id="workKicker">next action</span>
+    <section class="incident" id="incidentBox">
+      <div class="incident-head">
+        <span class="badge secure" id="severity">secure</span>
+        <span class="time" id="clock">standby</span>
+      </div>
+      <h2 id="incidentTitle">No active incident</h2>
+      <p id="incidentCopy">Tap Start Edge Sync. The app will simulate router firmware telemetry, raise a critical incident, trigger alarm, and unlock the response flow.</p>
+    </section>
+
+    <section class="workspace">
+      <div class="workspace-head">
+        <span id="workStep">ACTION REQUIRED</span>
         <b id="workTitle">Start edge sync</b>
       </div>
-      <div class="work-body" id="workBody">
-        Tap the primary button to simulate firmware telemetry. When backend is ready, this same state will come from your Docker API.
+      <div class="workspace-body" id="workBody">
+        <p>The app will stay in one screen. Details change as the operator moves through the incident.</p>
       </div>
     </section>
 
-    <section class="terminal-card">
-      <div class="terminal-head"><span></span><span></span><span></span><b>runtime logs</b></div>
+    <section class="terminal">
+      <div class="terminal-bar"><i></i><i></i><i></i><b>runtime / edge events</b></div>
       <div class="runtime" id="runtime"></div>
     </section>
 
-    <footer class="action-dock">
-      <button class="btn secondary" id="secondaryBtn">Backend check</button>
-      <button class="btn primary" id="primaryBtn">Start flow</button>
-    </footer>
+    <section class="dock">
+      <button class="btn secondary" id="secondaryBtn">Backend Check</button>
+      <button class="btn primary" id="primaryBtn">Start Edge Sync</button>
+    </section>
   </main>
 
-  <div class="toast" id="toast">Action completed</div>
-  <script src="app.js?v=8"></script>
+  <div class="alarm-overlay" id="alarmOverlay">
+    <div class="alarm-box">
+      <div class="sirens"><i></i><i></i><i></i></div>
+      <h2>CRITICAL THREAT</h2>
+      <p>Admin credential compromise chain detected. Acknowledge within SLA or escalation policy will trigger.</p>
+      <button id="quickAck">Acknowledge Alert</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="app.js?v=10"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=8').catch(() => undefined));
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=10').catch(() => undefined));
     }
   </script>
 </body>
