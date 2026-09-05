@@ -1,20 +1,20 @@
 {
-  "name": "PWN SHAKTI Secure Data Command",
+  "name": "PWN SHAKTI Secure Command",
   "short_name": "PWN SHAKTI",
-  "description": "Installable cybersecurity and blockchain verification application for secure file protection, monitoring, audit logs and reports.",
-  "start_url": "/dashboard",
+  "description": "Installable cybersecurity and blockchain verification command application.",
+  "start_url": "/login",
   "scope": "/",
   "display": "standalone",
   "background_color": "#070812",
   "theme_color": "#070812",
-  "orientation": "any",
+  "orientation": "portrait-primary",
   "icons": [
-    { "src": "/assets/logo.svg?v=12", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "/assets/logo.svg?v=14", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ],
   "shortcuts": [
-    { "name": "Dashboard", "short_name": "Dashboard", "url": "/dashboard", "icons": [{ "src": "/assets/logo.svg?v=12", "sizes": "any", "type": "image/svg+xml" }] },
-    { "name": "Upload & Encrypt", "short_name": "Upload", "url": "/upload", "icons": [{ "src": "/assets/logo.svg?v=12", "sizes": "any", "type": "image/svg+xml" }] },
-    { "name": "Security Monitoring", "short_name": "Security", "url": "/security", "icons": [{ "src": "/assets/logo.svg?v=12", "sizes": "any", "type": "image/svg+xml" }] }
+    { "name": "Dashboard", "short_name": "Dashboard", "url": "/dashboard", "icons": [{ "src": "/assets/logo.svg?v=14", "sizes": "any", "type": "image/svg+xml" }] },
+    { "name": "Upload & Encrypt", "short_name": "Upload", "url": "/upload", "icons": [{ "src": "/assets/logo.svg?v=14", "sizes": "any", "type": "image/svg+xml" }] },
+    { "name": "Security Monitoring", "short_name": "Security", "url": "/security", "icons": [{ "src": "/assets/logo.svg?v=14", "sizes": "any", "type": "image/svg+xml" }] }
   ],
   "categories": ["security", "productivity", "utilities"]
 }
