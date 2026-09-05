@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwn-shakti-secure-command-v14';
+const CACHE_NAME = 'pwn-shakti-secure-command-v15';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -8,7 +8,10 @@ const APP_SHELL = [
   '/data.js',
   '/api.js',
   '/app.js',
-  '/assets/logo.svg'
+  '/install-fix.js',
+  '/assets/logo.svg',
+  '/assets/icon-192.svg',
+  '/assets/icon-512.svg'
 ];
 
 self.addEventListener('install', (event) => {
