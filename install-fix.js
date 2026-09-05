@@ -1,30 +1,16 @@
 (() => {
-  const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('SHAKTII_INSTALLED') === 'true';
+  const demoUser = { name: 'Khushi Jain', role: 'Security Admin', email: 'admin@pwnshakti.ai' };
+  const realStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const installedFlag = () => localStorage.getItem('SHAKTII_INSTALLED') === 'true';
+  const canOpenAsApp = () => realStandalone();
 
-  function replaceCopy() {
-    document.querySelectorAll('button, a').forEach((el) => {
-      const text = (el.textContent || '').trim().toLowerCase();
-      if (text === 'enter secure app') el.textContent = 'Open Demo Dashboard';
-      if (text === 'create and enter app') el.textContent = 'Create Demo Workspace';
-    });
-    document.querySelectorAll('h1').forEach((el) => {
-      if ((el.textContent || '').trim() === 'Welcome back') el.textContent = 'Open PWN SHAKTI';
-      if ((el.textContent || '').trim() === 'Create workspace') el.textContent = 'Create demo workspace';
-    });
-  }
-
-  function updateInstallButtons() {
-    const installed = isStandalone();
-    document.querySelectorAll('[data-action="install"]').forEach((button) => {
-      button.textContent = installed ? 'App Installed' : 'Install App';
-      button.disabled = installed;
-      button.classList.toggle('is-installed', installed);
-      button.title = installed ? 'PWN SHAKTI is already installed' : 'Install PWN SHAKTI on this device';
-    });
+  function setDemoUser() {
+    localStorage.setItem('SHAKTII_USER', JSON.stringify(demoUser));
+    try { state.user = demoUser; } catch (_) {}
   }
 
   function showInstallHelp() {
-    if (isStandalone()) return;
+    if (canOpenAsApp()) return;
     const existing = document.querySelector('.install-help');
     if (existing) existing.remove();
     const box = document.createElement('div');
@@ -32,40 +18,94 @@
     box.innerHTML = `
       <div class="install-help-card">
         <button class="install-help-close" aria-label="Close">×</button>
-        <img src="/assets/logo.svg?v=15" alt="PWN SHAKTI" />
+        <img src="/assets/logo.svg?v=16" alt="PWN SHAKTI" />
         <h2>Install PWN SHAKTI</h2>
-        <p>Your browser has not exposed the native install prompt yet. Use the browser menu once:</p>
+        <p>If the automatic prompt does not open, install from Chrome menu:</p>
         <ol>
-          <li>Open this link in <b>Chrome</b>.</li>
-          <li>Tap the <b>⋮ menu</b>.</li>
-          <li>Choose <b>Install app</b> or <b>Add to Home screen</b>.</li>
+          <li>Tap the <b>⋮</b> menu in Chrome.</li>
+          <li>Select <b>Install app</b> or <b>Add to Home screen</b>.</li>
+          <li>Open PWN SHAKTI from your phone home screen.</li>
         </ol>
-        <p class="helper">After install, this button will change to App Installed.</p>
       </div>`;
     document.body.appendChild(box);
     box.querySelector('.install-help-close').onclick = () => box.remove();
     box.addEventListener('click', (e) => { if (e.target === box) box.remove(); });
   }
 
-  document.addEventListener('click', (event) => {
-    const btn = event.target.closest('[data-action="install"]');
-    if (!btn || isStandalone()) return;
-    setTimeout(() => {
-      const text = (document.getElementById('toast')?.textContent || '').toLowerCase();
-      if (text.includes('browser menu') || text.includes('available from browser')) showInstallHelp();
-    }, 120);
-  }, true);
+  authPage = function authPageInstallOnly() {
+    return `
+      <main class="auth-screen install-only-screen">
+        <section class="auth-card install-only-card">
+          <img src="/assets/logo.svg?v=16" alt="PWN SHAKTI" class="auth-logo" />
+          <p class="eyebrow">Mobile security application</p>
+          <h1>Install PWN SHAKTI</h1>
+          <p class="muted">Install the lightweight app first. After installation, open it from your home screen to access Dashboard, Files, Upload, Blockchain, Security, Analytics and Reports.</p>
+          <button class="btn primary full install-main-button" data-action="install">Install App</button>
+        </section>
+      </main>`;
+  };
+
+  const previousInstallApp = installApp;
+  installApp = async function installOnlyFlow() {
+    if (canOpenAsApp()) {
+      localStorage.setItem('SHAKTII_INSTALLED', 'true');
+      setDemoUser();
+      if (window.location.pathname !== '/dashboard') navigate('/dashboard');
+      return;
+    }
+
+    try {
+      if (state.installPrompt) {
+        state.installPrompt.prompt();
+        const result = await state.installPrompt.userChoice;
+        state.installPrompt = null;
+        if (result.outcome === 'accepted') {
+          localStorage.setItem('SHAKTII_INSTALLED', 'true');
+          toast('App installed. Open it from your home screen.', 'success');
+          updateInstallButtons();
+          return;
+        }
+      }
+    } catch (_) {
+      try { await previousInstallApp(); } catch (__) {}
+    }
+
+    showInstallHelp();
+  };
+
+  updateInstallButtons = function updateInstallOnlyButtons() {
+    const runningInstalledApp = canOpenAsApp();
+    document.querySelectorAll('[data-action="install"]').forEach((button) => {
+      if (runningInstalledApp) {
+        button.style.display = 'none';
+        return;
+      }
+      button.style.display = '';
+      button.textContent = 'Install App';
+      button.disabled = false;
+      button.classList.remove('is-installed');
+      button.title = 'Install PWN SHAKTI on this device';
+    });
+  };
 
   window.addEventListener('appinstalled', () => {
     localStorage.setItem('SHAKTII_INSTALLED', 'true');
     updateInstallButtons();
+    toast('App installed. Open it from your home screen.', 'success');
   });
 
-  const observer = new MutationObserver(() => {
-    replaceCopy();
+  if (canOpenAsApp()) {
+    localStorage.setItem('SHAKTII_INSTALLED', 'true');
+    setDemoUser();
+    if (['/', '/login', '/signup'].includes(window.location.pathname)) {
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  } else if (installedFlag() && ['/', '/login', '/signup'].includes(window.location.pathname)) {
+    // Browser tab still shows only installation CTA. The full dashboard opens in standalone app mode.
+  }
+
+  setTimeout(() => {
+    try { render(); } catch (_) {}
     updateInstallButtons();
-  });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-  replaceCopy();
-  updateInstallButtons();
+  }, 0);
 })();
