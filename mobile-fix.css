@@ -1,0 +1,171 @@
+/* Emergency product-polish overrides for jury demo */
+.auth-card {
+  text-align: center;
+}
+.auth-logo {
+  width: 168px !important;
+  max-width: 68vw !important;
+  margin: 0 auto 24px !important;
+  display: block !important;
+}
+.auth-card .eyebrow,
+.auth-card h1,
+.auth-card p {
+  text-align: center;
+}
+.brand-block {
+  justify-content: center !important;
+  text-align: center !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+.brand-block img {
+  width: 126px !important;
+  height: 92px !important;
+  object-fit: contain !important;
+}
+.brand-block strong {
+  display: none !important;
+}
+.brand-block span {
+  font-size: 12px !important;
+}
+.page-header h1,
+.auth-card h1,
+.stat-card strong,
+.incident h2,
+.card h2 {
+  letter-spacing: -0.018em !important;
+  text-wrap: balance;
+}
+.page-header h1,
+.auth-card h1 {
+  font-weight: 780 !important;
+}
+p,
+.muted,
+.page-header p,
+.card p,
+td,
+th,
+.input,
+.btn {
+  letter-spacing: normal !important;
+}
+.card,
+.stat-card,
+.auth-card,
+.info,
+.upload-card {
+  overflow-wrap: break-word;
+}
+@media (max-width: 860px) {
+  body {
+    background: #050712 !important;
+  }
+  .app-shell {
+    display: block !important;
+    min-height: 100vh !important;
+    padding-bottom: 78px !important;
+  }
+  .topbar {
+    height: 68px !important;
+    padding: 0 14px !important;
+    display: grid !important;
+    grid-template-columns: 44px 1fr 44px !important;
+    align-items: center !important;
+  }
+  .icon-btn.menu {
+    display: grid !important;
+    grid-column: 1 !important;
+  }
+  .top-title {
+    grid-column: 2 !important;
+    text-align: center !important;
+    min-width: 0 !important;
+  }
+  .top-title strong {
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+  }
+  .top-title span {
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .top-actions {
+    grid-column: 3 !important;
+    justify-content: end !important;
+  }
+  .top-actions .status-pill,
+  .top-actions .btn.small {
+    display: none !important;
+  }
+  .avatar {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .content {
+    padding: 18px 14px 96px !important;
+  }
+  .page-header {
+    display: block !important;
+    margin-bottom: 16px !important;
+  }
+  .page-header h1 {
+    font-size: 27px !important;
+    line-height: 1.15 !important;
+  }
+  .page-header p {
+    font-size: 14px !important;
+    line-height: 1.55 !important;
+  }
+  .page-actions {
+    margin-top: 14px !important;
+  }
+  .stats-grid,
+  .dashboard-grid,
+  .detail-grid,
+  .analytics-grid,
+  .cards-3,
+  .upload-layout,
+  .info-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .span-2,
+  .span-3 {
+    grid-column: auto !important;
+  }
+  .stat-card {
+    min-height: 112px !important;
+  }
+  .stat-card strong {
+    font-size: 29px !important;
+  }
+  .card,
+  .stat-card {
+    padding: 16px !important;
+  }
+  .mobile-nav {
+    display: grid !important;
+  }
+  .sidebar {
+    transform: translateX(-105%) !important;
+    transition: .2s ease !important;
+    z-index: 80 !important;
+  }
+  .sidebar-open .sidebar {
+    transform: translateX(0) !important;
+  }
+  .shell-backdrop {
+    display: none !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0,0,0,.55) !important;
+    z-index: 70 !important;
+  }
+  .sidebar-open .shell-backdrop {
+    display: block !important;
+  }
+}
