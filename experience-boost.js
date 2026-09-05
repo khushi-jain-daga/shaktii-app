@@ -7,6 +7,19 @@
     { title: 'Generate PDF report', path: '/reports', text: 'Build the report from analysis data and download the professional PDF.' }
   ];
 
+  const navItems = [
+    { key: 'dashboard', icon: '⌂', label: 'Home / Dashboard' },
+    { key: 'new', icon: '⇧', label: 'New Analysis' },
+    { key: 'result', icon: '◈', label: 'Analysis Result' },
+    { key: 'analytics', icon: '↗', label: 'Analytics' },
+    { key: 'findings', icon: '!', label: 'Findings / Issues' },
+    { key: 'iocs', icon: '◎', label: 'Indicators / IOCs' },
+    { key: 'history', icon: '☷', label: 'History' },
+    { key: 'reports', icon: '◧', label: 'Reports' },
+    { key: 'settings', icon: '⚙', label: 'Settings' },
+    { key: 'profile', icon: '◉', label: 'Profile' }
+  ];
+
   let panelOpen = false;
 
   const go = (path) => {
@@ -17,12 +30,72 @@
     }
   };
 
-  function enhanceSidebarLabels() {
-    document.querySelectorAll('.pkap-side button').forEach((btn) => {
-      const label = btn.textContent.trim().replace(/^.+?\s/, '') || btn.getAttribute('data-route') || 'Open';
-      btn.setAttribute('data-tip', label);
-    });
+  function getActive() {
+    try { return typeof activeAnalysis === 'function' ? activeAnalysis() : null; } catch (_) { return null; }
   }
+
+  function routeFor(key) {
+    const active = getActive();
+    if (key === 'dashboard') return '/dashboard';
+    if (key === 'new') return '/new-analysis';
+    if (key === 'history') return '/history';
+    if (key === 'reports') return '/reports';
+    if (key === 'settings' || key === 'profile') return '/settings';
+    if (['result', 'analytics', 'findings', 'iocs'].includes(key)) return active ? `/analysis/${active.id}` : '/new-analysis';
+    return '/dashboard';
+  }
+
+  function replaceSidebarNav() {
+    const side = document.querySelector('.pkap-side');
+    const nav = document.querySelector('.pkap-side nav');
+    if (!side || !nav || nav.dataset.fullRestored === 'true') return;
+
+    nav.dataset.fullRestored = 'true';
+    const active = getActive();
+    const current = location.pathname;
+    nav.innerHTML = navItems.map((item) => {
+      const route = routeFor(item.key);
+      const isActive = current === route || (item.key === 'result' && current.startsWith('/analysis/'));
+      const disabled = !active && ['result','analytics','findings','iocs'].includes(item.key);
+      return `<button class="${isActive ? 'active' : ''}" data-full-nav="${item.key}" ${disabled ? 'aria-disabled="true"' : ''}><span>${item.icon}</span>${item.label}</button>`;
+    }).join('');
+
+    const logout = side.querySelector('.pkap-logout');
+    if (logout) logout.innerHTML = '<span>⏻</span> Logout';
+  }
+
+  document.addEventListener('click', (event) => {
+    const item = event.target.closest('[data-full-nav]');
+    if (!item) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const key = item.dataset.fullNav;
+    const active = getActive();
+    if (!active && ['result','analytics','findings','iocs'].includes(key)) {
+      if (typeof toast === 'function') toast('Run a new analysis first.', 'info');
+      return go('/new-analysis');
+    }
+
+    if (key === 'findings') {
+      try { state.drawer = 'findings'; } catch (_) {}
+      go(routeFor(key));
+      setTimeout(() => { try { state.drawer = 'findings'; render(); } catch (_) {} }, 20);
+      return;
+    }
+    if (key === 'iocs') {
+      try { state.drawer = 'iocs'; } catch (_) {}
+      go(routeFor(key));
+      setTimeout(() => { try { state.drawer = 'iocs'; render(); } catch (_) {} }, 20);
+      return;
+    }
+    if (key === 'analytics') {
+      try { state.drawer = 'severity'; } catch (_) {}
+      go(routeFor(key));
+      return;
+    }
+    return go(routeFor(key));
+  }, true);
 
   function addSideHome() {
     if (document.querySelector('.side-home-fab')) return;
@@ -99,7 +172,7 @@
   }
 
   function runEnhancements() {
-    enhanceSidebarLabels();
+    replaceSidebarNav();
     addSideHome();
     addWorkflowPanel();
     addCommandStrip();
