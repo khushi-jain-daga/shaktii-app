@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwn-shakti-pkap-final-v27';
+const CACHE_NAME = 'pwn-shakti-b3d-rebuild-pkap-v28';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -8,9 +8,11 @@ const APP_SHELL = [
   '/chart-polish.css',
   '/alarm-polish.css',
   '/pkap-final.css',
+  '/data.js',
   '/api.js',
   '/app.js',
   '/alarm-engine.js',
+  '/chart-fix.js',
   '/assets/logo.svg',
   '/assets/icon-192.svg',
   '/assets/icon-512.svg'
