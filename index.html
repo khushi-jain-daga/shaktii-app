@@ -9,14 +9,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="PWN SHAKTI" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="/manifest.webmanifest?v=28" />
-  <link rel="icon" href="/assets/icon-192.svg?v=28" />
-  <link rel="apple-touch-icon" href="/assets/icon-192.svg?v=28" />
-  <link rel="stylesheet" href="/style.css?v=28" />
-  <link rel="stylesheet" href="/mobile-fix.css?v=28" />
-  <link rel="stylesheet" href="/chart-polish.css?v=28" />
-  <link rel="stylesheet" href="/alarm-polish.css?v=28" />
-  <link rel="stylesheet" href="/pkap-final.css?v=28" />
+  <link rel="manifest" href="/manifest.webmanifest?v=29" />
+  <link rel="icon" href="/assets/icon-192.svg?v=29" />
+  <link rel="apple-touch-icon" href="/assets/icon-192.svg?v=29" />
+  <link rel="stylesheet" href="/style.css?v=29" />
+  <link rel="stylesheet" href="/mobile-fix.css?v=29" />
+  <link rel="stylesheet" href="/chart-polish.css?v=29" />
+  <link rel="stylesheet" href="/alarm-polish.css?v=29" />
+  <link rel="stylesheet" href="/pkap-final.css?v=29" />
   <title>PWN SHAKTI — PKAP Analyzer</title>
 </head>
 <body>
@@ -26,8 +26,8 @@
     <div class="alarm-card" role="dialog" aria-modal="true" aria-label="Critical security alarm">
       <div class="alarm-pulse"><span></span><span></span><span></span></div>
       <p class="overline danger-text">Critical security alarm</p>
-      <h2>Unauthorized access chain detected</h2>
-      <p>SHAKTII detected a suspicious session. Acknowledge within SLA or containment policy will activate.</p>
+      <h2>Danger detected in network flow</h2>
+      <p>SHAKTII detected a malware or high-risk router/network signal. The alarm will continue until you acknowledge or stop it.</p>
       <div class="alarm-actions">
         <button class="btn ghost" data-close-alarm>Dismiss</button>
         <button class="btn danger" data-ack-alarm>Acknowledge alert</button>
@@ -37,14 +37,15 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="/data.js?v=28"></script>
-  <script src="/api.js?v=28"></script>
-  <script src="/app.js?v=28"></script>
-  <script src="/alarm-engine.js?v=28"></script>
-  <script src="/chart-fix.js?v=28"></script>
+  <script src="/data.js?v=29"></script>
+  <script src="/api.js?v=29"></script>
+  <script src="/app.js?v=29"></script>
+  <script src="/alarm-engine.js?v=29"></script>
+  <script src="/auto-threat-alarm.js?v=29"></script>
+  <script src="/chart-fix.js?v=29"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js?v=28').catch(() => undefined));
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js?v=29').catch(() => undefined));
     }
   </script>
 </body>
